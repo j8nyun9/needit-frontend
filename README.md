@@ -1,24 +1,35 @@
-# Frontend — React
+# NEEDIT Frontend
 
-- public: 정적 파일
-- src/assets: 이미지·아이콘
-- src/components/common: 공통 버튼·입력창 등
-- src/layouts: 공통 레이아웃
-- src/pages: 라우트별 페이지
-- src/features/problems: 불편함 등록·목록·공감·댓글
-- src/features/ideas: AI 아이디어 결과
-- src/features/projects: 프로젝트 선택·상태·베타 링크
-- src/features/feedback: 사용자 피드백
-- 기능별 components: 전용 UI / api: 서버 요청 함수
-- src/services: 공통 HTTP 클라이언트
-- src/hooks, styles, utils: 공통 훅·스타일·유틸리티
+참고 이미지 기반의 React 홈 화면입니다. 다크 테마, 반응형 레이아웃, 검색, 공감, 제보 모달, 프로젝트 상세를 제공합니다.
 
-## 초기 설정
+## 실행
 
-Vite React 프로젝트를 별도 임시 폴더에서 생성한 뒤 이 폴더에 합치세요. JavaScript/TypeScript는 팀에서 결정하세요.
-기존 폴더와 문서를 보존하고 package.json 등의 실행 파일을 추가하세요.
-설정 완료 후 이 폴더에서 npm install, npm run dev로 실행합니다.
-현재는 package.json이 없어 실행되지 않습니다.
+이 폴더에서 아래 명령을 실행하세요.
 
-.env.example을 .env.local로 복사하세요. VITE_ 변수는 브라우저에 공개됩니다. AI 비밀 키를 넣지 마세요.
-백엔드 완성 전에는 노션의 공통 API 명세의 예시 응답으로 화면을 개발하세요.
+```powershell
+npm install
+npm run dev
+```
+
+브라우저에서 http://127.0.0.1:5173 을 여세요.
+
+```powershell
+npm run build
+npm run preview
+```
+
+## 주요 파일
+
+- src/App.jsx: 홈 화면 및 데모 상호작용
+- src/components/common/Icon.jsx: SVG 아이콘
+- src/styles/global.css: 다크 테마 및 반응형 스타일
+- src/main.jsx: React 진입점
+
+## 현재 구현 범위
+
+백엔드가 연결되지 않은 화면 데모입니다. 목록과 진행률은 예시 데이터이며 제보·공감은 메모리에서만 변경되어 새로고침하면 초기화됩니다.
+로그인 및 알림은 안내 모달입니다. AI 생성·실제 프로젝트 데이터·회원 인증은 API 연결 후 구현해야 합니다.
+외부 폰트·이미지를 다운로드하지 않고 시스템 폰트와 SVG로 구현했습니다.
+
+.env.example의 VITE_API_BASE_URL은 추후 API 연결용이며 현재 화면에서는 사용하지 않습니다.
+AI 비밀 키는 프론트 환경변수에 넣지 마세요.
