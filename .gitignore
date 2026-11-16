@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.gradle/
+build/
+target/
+*.class
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+.idea/
+*.iml
+*.log
+.DS_Store
+Thumbs.db

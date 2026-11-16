@@ -21,4 +21,4 @@ Vite React 프로젝트를 별도 임시 폴더에서 생성한 뒤 이 폴더�
 현재는 package.json이 없어 실행되지 않습니다.
 
 .env.example을 .env.local로 복사하세요. VITE_ 변수는 브라우저에 공개됩니다. AI 비밀 키를 넣지 마세요.
-백엔드 완성 전에는 docs/api-contract.md의 예시 응답으로 화면을 개발하세요.
+백엔드 완성 전에는 노션의 공통 API 명세의 예시 응답으로 화면을 개발하세요.
