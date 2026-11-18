@@ -1,0 +1,230 @@
+.report-wizard {
+  width: min(100%, 660px);
+  margin-inline: auto;
+  padding-bottom: 36px;
+}
+
+.report-wizard__header { margin-bottom: 20px; }
+
+.report-wizard__progress-label,
+.report-wizard__category-summary,
+.report-wizard__body-label,
+.report-wizard__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.report-wizard__progress-label {
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-wizard progress {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin-top: 11px;
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #363c45;
+}
+
+.report-wizard progress::-webkit-progress-bar { background: #363c45; }
+.report-wizard progress::-webkit-progress-value { background: #619ffa; border-radius: 10px; }
+.report-wizard progress::-moz-progress-bar { background: #619ffa; border-radius: 10px; }
+
+.report-wizard__form {
+  min-width: 0;
+  padding: clamp(18px, 4vw, 32px);
+  background: #20252b;
+  border: 1px solid #363e48;
+  border-radius: 16px;
+}
+
+.wp-page.report-wizard h1 {
+  margin: 0 0 22px;
+  font-size: clamp(23px, 4vw, 30px);
+  letter-spacing: -.035em;
+  word-break: keep-all;
+}
+
+.report-wizard h1:focus { outline: none; }
+
+.report-wizard__required {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--blue);
+  vertical-align: middle;
+}
+
+.report-wizard fieldset {
+  min-width: 0;
+  margin-inline: 0;
+  border: 0;
+  padding: 0;
+}
+
+.report-wizard__choices {
+  display: grid;
+  gap: 8px;
+}
+
+.report-wizard__choice {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: #252c34;
+  border: 1px solid #434d59;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.report-wizard__choice input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  clip-path: inset(50%);
+}
+
+.report-wizard__choice strong { display: block; line-height: 1.45; }
+
+.report-wizard__choice strong + span {
+  display: block;
+  margin-top: 2px;
+  color: #b6c2d0;
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.report-wizard__check {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid #637184;
+  border-radius: 50%;
+  color: transparent;
+}
+
+.report-wizard__choice:hover { border-color: #6b7a8e; }
+
+.report-wizard__choice:has(:checked) {
+  background: #24364f;
+  border-color: var(--blue);
+}
+
+.report-wizard__choice:has(:checked) .report-wizard__check {
+  color: #101e31;
+  background: var(--blue);
+  border-color: var(--blue);
+  font-weight: 800;
+}
+
+.report-wizard__choice:has(:focus-visible) {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.report-wizard__field + .report-wizard__field,
+.report-wizard__category-summary + .report-wizard__field { margin-top: 20px; }
+
+.report-wizard__field label,
+.report-wizard__field legend { font-weight: 700; line-height: 1.5; }
+
+.report-wizard__field small {
+  margin-left: 4px;
+  color: #aebccc;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.report-wizard .report-wizard__field :is(textarea, input) {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 1.6;
+  background: #1b2027;
+}
+
+.report-wizard__field [aria-invalid="true"] { border-color: #ffada4; }
+
+.report-wizard__hint,
+.report-wizard__count {
+  margin: 6px 0 0;
+  color: #b6c2d0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.report-wizard__guidance,
+.report-wizard__example { word-break: keep-all; overflow-wrap: anywhere; }
+
+.report-wizard__guidance { margin: 0; color: #e1e8f0; font-size: 14px; line-height: 1.65; }
+.report-wizard__example strong { margin-right: 4px; color: var(--blue); }
+
+.report-wizard__count { text-align: right; font-variant-numeric: tabular-nums; }
+
+.report-wizard__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.report-wizard__pills button[aria-pressed="true"] {
+  background: #24364f;
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.report-wizard__category-summary {
+  padding: 10px 12px;
+  border: 1px solid #3b4b61;
+  border-radius: 8px;
+  background: #252f3d;
+  font-size: 14px;
+}
+
+.report-wizard__category-summary strong { margin-left: 6px; color: var(--blue); }
+
+.report-wizard__text-button {
+  flex-shrink: 0;
+  color: var(--blue);
+  font-size: 13px;
+  padding: 5px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.report-wizard__actions {
+  position: sticky;
+  bottom: 0;
+  background: #20252b;
+  border-top: 1px solid #3a424d;
+  margin-top: 24px;
+  padding-top: 18px;
+}
+
+.report-wizard__actions .button { min-width: 100px; }
+.report-wizard button:disabled { opacity: .55; cursor: not-allowed; }
+.report-wizard__error { margin-top: 10px; color: #ffada4; }
+
+@media (max-width: 520px) {
+  .report-wizard { padding-bottom: 24px; }
+  .report-wizard__form { padding: 16px; }
+  .report-wizard__actions .button { flex: 1; min-width: 0; }
+  .report-wizard__body-label { flex-wrap: wrap; gap: 4px 12px; }
+}

@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import Icon from './components/common/Icon.jsx';
 import {AuthContext,LoginRequired} from './contexts/AuthContext.jsx';
 import {listProblems,createProblem} from './services/problems.js';
-import { problemCategories } from './services/problemCategories.js';
+import ReportPage from './features/problems/components/ReportPage.jsx';
 import MyPage from './pages/MyPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import {currentUser,logout} from './services/auth.js';
 import ReadmePage from './pages/ReadmePage.jsx';
-import {ExplorePage,ReportPage,IssueDetailPage,ProjectsPage,ProjectDetailPage,extraIssues} from './pages/WorkspacePages.jsx';
+import {ExplorePage,IssueDetailPage,ProjectsPage,ProjectDetailPage,extraIssues} from './pages/WorkspacePages.jsx';
 
 const initialProblems = [
  {id:103,title:'강의실 콘센트가 부족해요',category:'시설',count:127},
@@ -65,7 +65,6 @@ export default function App(){
  const filteredProblems=problems.filter(p=>(p.title+p.category).includes(query));
  const filteredProjects=projects.filter(p=>(p.title+p.description).includes(query));
  function toggleLike(id){if(!requireLogin())return;const active=liked.includes(id);setLiked(prev=>active?prev.filter(x=>x!==id):[...prev,id]);setProblems(prev=>prev.map(p=>p.id===id?{...p,count:p.count+(active?-1:1)}:p));}
- async function submitProblem(event){event.preventDefault();const form=new FormData(event.currentTarget);try{await saveProblem({title:String(form.get('title')||''),description:String(form.get('description')||''),category:String(form.get('category')||'')});setDialog(null);}catch(error){setNotice(error.message);}}
  return <AuthContext.Provider value={{user,requireLogin}}>
   <header className="header"><div className="header-inner">
    <a className="brand" href="#" onClick={e=>{e.preventDefault();setPage(null);setTab('홈');setQuery('');}} aria-label="NEEDIT 홈"><Icon name="code" size={34}/><span>NEEDIT</span></a>
@@ -93,8 +92,8 @@ export default function App(){
    </>}
   </main>
   <footer className="site-footer"><div className="footer-terminal-bar"><div className="footer-window-dots" aria-hidden="true"><i/><i/><i/></div><span>needit@campus: ~/connect</span><span className="footer-shell">bash</span></div><div className="footer-inner"><div className="footer-summary"><a className="brand footer-brand" href="#" onClick={e=>{e.preventDefault();setPage(null);setTab(footerPages[0]);setQuery('');window.scrollTo({top:0,behavior:'smooth'});}}><Icon name="code" size={28}/><span>NEEDIT</span></a><p>학생들의 작은 불편함을 모아<br/>개발 아이디어와 실제 서비스로 연결합니다.</p><strong>당신의 불편함에서, 모두의 서비스로.</strong></div><nav className="footer-menu" aria-label="하단 메뉴"><h2><span>$</span> ls ./pages</h2><div>{footerPages.map(page=><a key={page} href="#" aria-current={tab===page&&!query?'page':undefined} onClick={e=>{e.preventDefault();setPage(null);setTab(page);setQuery('');window.scrollTo({top:0,behavior:'smooth'});}}>{page}</a>)}<button onClick={()=>setPage({type:'report'})}>불편함 제보하기</button></div></nav><div className="footer-about"><h2><span>$</span> cat about.txt</h2><p>2026 컴퓨터학부 해커톤 프로젝트</p><p>NEED + IT</p><p>실제 문제 발견 · 개발 · 사용자 검증</p></div></div><div className="footer-bottom"><div><span>© {new Date().getFullYear()} NEEDIT</span><span className="footer-prompt">needit@campus:~$ <span className="footer-ready">ready to solve</span><span className="footer-cursor" aria-hidden="true">▌</span></span></div></div></footer>
-  <dialog ref={dialogRef} onCancel={()=>setDialog(null)} onClick={e=>{if(e.target===e.currentTarget)setDialog(null);}} aria-labelledby="dialog-title"><div className="dialog-header"><h2 id="dialog-title">{dialog?.type==='report'?'불편함 제보하기':dialog?.type==='notification'?'알림':dialog?.type==='profile'?'내 프로필':dialog?.data?.title}</h2><button className="icon-button" aria-label="닫기" onClick={()=>setDialog(null)}><Icon name="close"/></button></div>
-   {dialog?.type==='report'?<form onSubmit={submitProblem}><p className="muted">작은 불편함도 좋은 프로젝트의 시작이 될 수 있어요.</p><label>제목<input name="title" required maxLength={80} pattern=".*\S.*" placeholder="어떤 불편함을 겪으셨나요?"/></label><label>카테고리<select name="category">{problemCategories.map(({ name }) => <option key={name} value={name}>{name}</option>)}</select></label><label>자세한 이야기<textarea name="description" required maxLength={2000} rows={4} placeholder="언제, 어디에서, 어떤 점이 불편했는지 알려주세요."/></label><p className="demo-note">데모 화면입니다. 등록 내용은 새로고침하면 초기화됩니다.</p><button className="button primary submit" type="submit">제보 등록하기 <Icon name="arrow" size={20}/></button></form>:dialog?.type==='problem'?<div className="detail"><span className="category">{dialog.data.category}</span><p>{dialog.data.description||'학교생활에서 겪는 이 불편함에 공감하고, 해결 아이디어를 함께 나눠주세요.'}</p><button className="button outline" onClick={()=>{toggleLike(dialog.data.id);setDialog(null);}}><Icon name="heart"/> {liked.includes(dialog.data.id)?'공감 취소하기':'저도 공감해요'}</button></div>:dialog?.type==='project'?<div className="detail"><span className="category">{dialog.data.status}</span><p>{dialog.data.description}</p><p className="muted">진행률 {dialog.data.progress}% · 프로젝트 예시 데이터</p></div>:<p className="detail muted">{dialog?.type==='notification'?'아직 새로운 알림이 없어요.':'현재는 게스트로 둘러보고 있어요. 로그인 기능은 백엔드 연결 후 제공될 예정이에요.'}</p>}
+  <dialog ref={dialogRef} onCancel={()=>setDialog(null)} onClick={e=>{if(e.target===e.currentTarget)setDialog(null);}} aria-labelledby="dialog-title"><div className="dialog-header"><h2 id="dialog-title">{dialog?.type==='notification'?'알림':dialog?.type==='profile'?'내 프로필':dialog?.data?.title}</h2><button className="icon-button" aria-label="닫기" onClick={()=>setDialog(null)}><Icon name="close"/></button></div>
+   {dialog?.type==='problem'?<div className="detail"><span className="category">{dialog.data.category}</span><p>{dialog.data.description||'학교생활에서 겪는 이 불편함에 공감하고, 해결 아이디어를 함께 나눠주세요.'}</p><button className="button outline" onClick={()=>{toggleLike(dialog.data.id);setDialog(null);}}><Icon name="heart"/> {liked.includes(dialog.data.id)?'공감 취소하기':'저도 공감해요'}</button></div>:dialog?.type==='project'?<div className="detail"><span className="category">{dialog.data.status}</span><p>{dialog.data.description}</p><p className="muted">진행률 {dialog.data.progress}% · 프로젝트 예시 데이터</p></div>:<p className="detail muted">{dialog?.type==='notification'?'아직 새로운 알림이 없어요.':'현재는 게스트로 둘러보고 있어요. 로그인 기능은 백엔드 연결 후 제공될 예정이에요.'}</p>}
   </dialog>
   {notice&&<div className="toast" role="status">{notice}</div>}
  </AuthContext.Provider>;
