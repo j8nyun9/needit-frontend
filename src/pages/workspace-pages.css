@@ -28,6 +28,23 @@
 }
 .wp-rank-2 .wp-rank-label { color: #b9c8e9; }
 
+.wp-category-tooltip {
+  position: fixed;
+  z-index: 20;
+  box-sizing: border-box;
+  width: max-content;
+  padding: 7px 10px;
+  border: 1px solid #515963;
+  border-radius: 8px;
+  background: #1b2025;
+  color: #f0f3f8;
+  box-shadow: 0 4px 12px #0006;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
 .wp-detail-actions > .wp-share { margin-left: 0; }
 .wp-share-status { color: #a9c8ff; font-size: 13px; }
 .wp-share-status:empty { display: none; }
