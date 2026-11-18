@@ -1,13 +1,16 @@
+import {getToken} from './auth.js';
 import { normalizeProblemCategory } from './problemCategories.js';
 
 const base=(import.meta.env.VITE_API_BASE_URL||(import.meta.env.PROD?'https://needit-backend-d3lv.onrender.com/api':'/api')).replace(/\/$/,'');
 export function normalizeProblem(row){return {...row,description:row.content||'',category:normalizeProblemCategory(row.category),count:Number(row.likes_count??row.count??0)};}
 async function request(path,options={}){
+ options={...options,headers:{...options.headers,...(getToken()?{Authorization:'Bearer '+getToken()}:{})}};
  let response;
  try{response=await fetch(`${base}${path}`,{...options,signal:options.signal?AbortSignal.any([options.signal,AbortSignal.timeout(90000)]):AbortSignal.timeout(90000)});}catch(error){if(options.signal?.aborted)throw error;throw new Error('백엔드에 연결하지 못했어요. 서버 실행 및 연결 설정을 확인해주세요.');}
  const body=await response.json().catch(()=>null);
  if(!response.ok){
   const message=response.status===404?'요청한 불편함 또는 AI API를 찾지 못했어요. 최신 백엔드 배포를 확인해주세요.':body?.ai_error?.message||body?.error||`서버 오류가 발생했어요 (${response.status}).`;
+  if(response.status===401&&typeof window!=='undefined')window.dispatchEvent(new Event('needit-auth-expired'));
   const error=new Error(message);error.status=response.status;
   const wait=Number(body?.retry_after||response.headers.get('Retry-After'));
   if(Number.isFinite(wait)&&wait>0)error.retryAfter=wait;
