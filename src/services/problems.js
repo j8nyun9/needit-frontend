@@ -1,6 +1,6 @@
 import { normalizeProblemCategory } from './problemCategories.js';
 
-const base=(import.meta.env.VITE_API_BASE_URL||(import.meta.env.PROD?'https://needit-backend.onrender.com/api':'/api')).replace(/\/$/,'');
+const base=(import.meta.env.VITE_API_BASE_URL||(import.meta.env.PROD?'https://needit-backend-d3lv.onrender.com/api':'/api')).replace(/\/$/,'');
 export function normalizeProblem(row){return {...row,description:row.content||'',category:normalizeProblemCategory(row.category),count:Number(row.likes_count??row.count??0)};}
 async function request(path,options={}){
  let response;
