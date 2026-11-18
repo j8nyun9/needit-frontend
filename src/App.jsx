@@ -43,7 +43,7 @@ export default function App(){
  const [loading,setLoading]=useState(true);
  const [apiError,setApiError]=useState('');
  const [reload,setReload]=useState(0);
- useEffect(()=>{const controller=new AbortController();setLoading(true);setApiError('');listProblems(controller.signal).then(setProblems).catch(error=>{if(!controller.signal.aborted)setApiError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();},[reload]);
+ useEffect(()=>{const controller=new AbortController();setLoading(true);setProblems([]);setApiError('');listProblems(controller.signal).then(setProblems).catch(error=>{if(!controller.signal.aborted)setApiError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();},[reload,user?.id]);
  function updateProblem(row){setProblems(prev=>prev.map(p=>p.id===row.id?{...p,...row,mine:p.mine,count:p.count}:p));}
  async function saveProblem(data){if(!requireLogin())throw new Error('로그인이 필요해요.');const p=await createProblem(data);setProblems(prev=>[{...p,mine:true},...prev.filter(item=>item.id!==p.id)]);setApiError('');setTab(footerPages[1]);setPage(null);setNotice('불편함을 DB에 등록했어요.');}
  useEffect(()=>{
