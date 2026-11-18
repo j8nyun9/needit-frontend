@@ -8,3 +8,22 @@
 @media(max-width:1350px){.my-overview{grid-template-columns:repeat(4,1fr)}.my-profile{grid-column:1/-1}.my-stat{gap:12px;min-height:145px}.my-content{grid-template-columns:1.4fr 1fr}.my-item{gap:12px}.my-item .category{display:none}}
 @media(max-width:900px){.my-content{grid-template-columns:1fr}.my-tabs button{font-size:13px;gap:7px}.my-tabs button svg{width:20px}.my-edit form{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.my-intro{font-size:14px}.my-overview{grid-template-columns:1fr 1fr;gap:12px}.my-profile{padding:22px 18px;gap:17px;align-items:flex-start}.my-avatar{width:65px;height:65px}.my-avatar>svg{width:44px}.my-avatar button{padding:5px}.my-profile-copy h2{font-size:21px}.my-profile-copy .button{margin-left:0;font-size:12px}.my-profile-copy>div{gap:8px}.my-profile-copy p{font-size:13px}.my-profile-copy small{font-size:11px}.my-stat{min-height:135px;padding:18px}.my-stat span{font-size:14px}.my-stat strong{font-size:26px}.my-tabs{grid-template-columns:1fr 1fr;margin-top:24px}.my-tabs button{font-size:12px;padding:15px 6px;gap:5px}.my-tabs button:after{display:none}.my-items{padding:0 16px}.my-item{flex-wrap:wrap;padding:20px 0;gap:10px}.my-item .issue-id{min-width:auto;font-size:12px}.my-item>div{flex-basis:calc(100% - 65px)}.my-item h3{font-size:14px}.my-item p{font-size:12px}.my-item-count{margin-left:auto}.my-panel-heading{font-size:17px!important;flex-wrap:wrap}.my-panel-heading .button{font-size:12px}.my-edit form{grid-template-columns:1fr}}
+
+.wp-issue-card.wp-rank-1 {
+  border-color: #78aaff;
+  background: linear-gradient(140deg, #243959, #1c2533);
+  box-shadow: inset 3px 0 #78aaff;
+}
+.wp-issue-card.wp-rank-2 {
+  border-color: #586e9e;
+  background: linear-gradient(140deg, #2b344c, #1d232d);
+  box-shadow: inset 2px 0 #586e9e;
+}
+.wp-rank-label {
+  align-self: flex-start;
+  margin-bottom: 12px;
+  color: #c8ddff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.wp-rank-2 .wp-rank-label { color: #b9c8e9; }
