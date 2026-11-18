@@ -1,5 +1,7 @@
+import { normalizeProblemCategory } from './problemCategories.js';
+
 const base=(import.meta.env.VITE_API_BASE_URL||(import.meta.env.PROD?'https://needit-backend.onrender.com/api':'/api')).replace(/\/$/,'');
-export function normalizeProblem(row){return {...row,description:row.content||'',category:row.category||'기타',count:Number(row.likes_count??row.count??0)};}
+export function normalizeProblem(row){return {...row,description:row.content||'',category:normalizeProblemCategory(row.category),count:Number(row.likes_count??row.count??0)};}
 async function request(path,options={}){
  let response;
  try{response=await fetch(`${base}${path}`,{...options,signal:options.signal||AbortSignal.timeout(90000)});}catch(error){if(options.signal?.aborted)throw error;throw new Error('백엔드에 연결하지 못했어요. 서버 실행 및 연결 설정을 확인해주세요.');}
