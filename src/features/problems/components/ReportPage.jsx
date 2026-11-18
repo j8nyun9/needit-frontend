@@ -1,4 +1,5 @@
 import React, { useId, useRef, useState } from 'react';
+import Icon from '../../../components/common/Icon.jsx';
 import { normalizeProblemCategory, problemCategories } from '../../../services/problemCategories.js';
 import './report-form.css';
 
@@ -88,6 +89,25 @@ export default function ReportPage({ onBack, onSubmit }) {
     <section className="wp-page report-page" aria-labelledby={id + '-heading'}>
       <button type="button" className="wp-back" disabled={saving} onClick={onBack}>← 불편함 탐색으로 돌아가기</button>
       <h1 id={id + '-heading'}>불편함 제보하기</h1>
+      <div className="report-page__layout">
+        <aside className="report-intro" aria-labelledby={id + '-intro'}>
+          <p className="code-comment">// 새로운 불편함 제보하기</p>
+          <h2 id={id + '-intro'}>일상 속 불편함을<br/><span>NEEDIT</span>에 알려주세요.</h2>
+          <p className="report-intro__description">학교생활에서 겪는 작은 불편함도 좋은 아이디어의 시작이 될 수 있어요. 복잡하게 생각하지 말고, 편하게 알려주세요!</p>
+          <section className="report-tips" aria-labelledby={id + '-tips'}>
+            <h3 id={id + '-tips'}><Icon name="sparkles"/>이렇게 등록하면 더 좋아요!</h3>
+            {[
+              ['pencil', '무엇이 불편한가요?', '언제, 어떤 상황에서 불편했는지 알려주세요.'],
+              ['users', '누구에게 필요한가요?', '나뿐만 아니라 다른 학생들도 겪는 문제인지 생각해보세요.'],
+              ['sparkles', '어떤 변화가 있으면 좋을까요?', '꼭 해결 방법이 아니어도, 바라는 방향을 적어주면 더 도움이 돼요.'],
+            ].map(([icon, heading, text]) => (
+              <div className="report-tips__item" key={icon}>
+                <span className="report-tips__icon"><Icon name={icon}/></span>
+                <div><h4>{heading}</h4><p>{text}</p></div>
+              </div>
+            ))}
+          </section>
+        </aside>
       <form className="report-form" onSubmit={submit}>
         <div className="report-form__body">
           <label htmlFor={id + '-description'}>어떤 점이 불편했나요?</label>
@@ -131,6 +151,7 @@ export default function ReportPage({ onBack, onSubmit }) {
           </button>
         </div>
       </form>
+      </div>
     </section>
   );
 }

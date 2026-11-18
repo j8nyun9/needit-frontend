@@ -1,5 +1,5 @@
 .report-page {
-  width: min(100%, 660px);
+  width: 100%;
   margin-inline: auto;
   padding-bottom: 34px;
 }
@@ -10,6 +10,31 @@
 }
 
 .report-page .wp-back { margin-bottom: 12px; }
+
+.report-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.8fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.report-intro { min-width: 0; }
+.report-intro .code-comment { margin: 0 0 14px; }
+.report-intro h2 { font-size: clamp(26px, 2.6vw, 36px); line-height: 1.5; margin: 0; word-break: keep-all; }
+.report-intro h2 span { color: var(--blue); }
+.report-intro__description { color: #b6c2d0; font-size: 15px; line-height: 1.9; margin: 18px 0 28px; word-break: keep-all; }
+.report-tips { padding: 22px; border: 1px solid #363e48; border-radius: 14px; background: #20252b; }
+.report-tips h3 { display: flex; align-items: center; gap: 10px; margin: 0; padding-bottom: 18px; font-size: 18px; border-bottom: 1px solid #3a424b; }
+.report-tips h3 svg { flex-shrink: 0; color: var(--blue); }
+.report-tips__item { display: flex; align-items: start; gap: 14px; padding: 18px 0; border-bottom: 1px solid #3a424b; }
+.report-tips__item:last-child { border-bottom: 0; padding-bottom: 0; }
+.report-tips__icon { display: flex; padding: 10px; border-radius: 10px; background: #2b333e; color: #c4d0df; }
+.report-tips__item h4 { margin: 0 0 7px; font-size: 16px; line-height: 1.5; }
+.report-tips__item p { margin: 0; color: #b6c2d0; font-size: 14px; line-height: 1.8; word-break: keep-all; }
+
+@media (max-width: 850px) {
+  .report-page__layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+}
 
 .report-form {
   padding: clamp(16px, 4vw, 30px);
