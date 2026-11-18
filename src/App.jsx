@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from './components/common/Icon.jsx';
+import {listProblems,createProblem} from './services/problems.js';
 import MyPage from './pages/MyPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import ReadmePage from './pages/ReadmePage.jsx';
@@ -23,8 +24,13 @@ const footerPages = ['홈','불편함 탐색','프로젝트','서비스 소개',
 export default function App(){
  const [tab,setTab]=useState('홈');
  const [query,setQuery]=useState('');
- const [problems,setProblems]=useState([...initialProblems,...extraIssues]);
+ const [problems,setProblems]=useState([]);
  const [page,setPage]=useState(null);
+ const [loading,setLoading]=useState(true);
+ const [apiError,setApiError]=useState('');
+ const [reload,setReload]=useState(0);
+ useEffect(()=>{const controller=new AbortController();setLoading(true);setApiError('');listProblems(controller.signal).then(setProblems).catch(error=>{if(!controller.signal.aborted)setApiError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();},[reload]);
+ async function saveProblem(data){const p=await createProblem(data);setProblems(prev=>[{...p,mine:true},...prev.filter(item=>item.id!==p.id)]);setApiError('');setTab(footerPages[1]);setPage(null);setNotice('불편함을 DB에 등록했어요.');}
  useEffect(()=>{setPage(null);},[tab]);
  const [liked,setLiked]=useState([]);
  const [dialog,setDialog]=useState(null);
@@ -35,7 +41,7 @@ export default function App(){
  const filteredProblems=problems.filter(p=>(p.title+p.category).includes(query));
  const filteredProjects=projects.filter(p=>(p.title+p.description).includes(query));
  function toggleLike(id){const active=liked.includes(id);setLiked(prev=>active?prev.filter(x=>x!==id):[...prev,id]);setProblems(prev=>prev.map(p=>p.id===id?{...p,count:p.count+(active?-1:1)}:p));}
- function submitProblem(event){event.preventDefault();const form=new FormData(event.currentTarget);setProblems(prev=>[{id:Math.max(...prev.map(p=>p.id))+1,title:form.get('title').trim(),category:form.get('category'),description:form.get('description').trim(),count:0},...prev]);setDialog(null);setTab('불편함 탐색');setNotice('불편함이 등록되었어요. 현재 브라우저의 데모 데이터에 반영됩니다.');}
+ async function submitProblem(event){event.preventDefault();const form=new FormData(event.currentTarget);try{await saveProblem({title:String(form.get('title')||''),description:String(form.get('description')||''),category:String(form.get('category')||'')});setDialog(null);}catch(error){setNotice(error.message);}}
  return <>
   <header className="header"><div className="header-inner">
    <a className="brand" href="#" onClick={e=>{e.preventDefault();setPage(null);setTab('홈');setQuery('');}} aria-label="NEEDIT 홈"><Icon name="code" size={34}/><span>NEEDIT</span></a>
@@ -43,7 +49,9 @@ export default function App(){
    <div className="header-tools"><label className="search"><Icon name="search" size={21}/><input aria-label="불편함이나 프로젝트 검색" placeholder="불편함이나 프로젝트를 검색하세요" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label="검색 지우기" onClick={()=>setQuery('')}><Icon name="close" size={16}/></button>}</label><button className="icon-button" aria-label="알림" onClick={()=>setDialog({type:'notification'})}><Icon name="bell" size={27}/></button><button className="header-login" onClick={()=>setPage({type:'login'})}>로그인</button><button className="avatar" aria-label="내 프로필" onClick={()=>setPage({type:'profile'})}><Icon name="user" size={23}/></button></div>
   </div></header>
   <main>
-   {page?.type==='login'?<LoginPage onBack={()=>{setPage(null);setTab(footerPages[0]);}}/>:(page?.type==='profile'||tab==='마이페이지')?<MyPage problems={problems} projects={projects} liked={liked} onIssue={p=>setPage({type:'problem',data:p})} onProject={p=>setPage({type:'project',data:p})} onReport={()=>setPage({type:'report'})}/>:page?.type==='report'?<ReportPage onBack={()=>setPage(null)} onSubmit={data=>{const p={...data,mine:true,id:Math.max(...problems.map(p=>p.id))+1,count:0};setProblems(prev=>[p,...prev]);setTab(footerPages[1]);setPage(null);setNotice('불편함이 등록되었어요. 새로고침하면 예시 데이터로 초기화돼요.');}}/>:page?.type==='problem'?<IssueDetailPage key={page.data.id} problem={problems.find(p=>p.id===page.data.id)||page.data} liked={liked.includes(page.data.id)} onLike={()=>toggleLike(page.data.id)} onBack={()=>setPage(null)} onProject={()=>{setPage(null);setTab(footerPages[2]);}}/>:page?.type==='project'?<ProjectDetailPage key={page.data.id} project={page.data} onBack={()=>setPage(null)} onIssues={()=>{setPage(null);setTab(footerPages[1]);}}/>:tab===footerPages[1]?<ExplorePage problems={problems} liked={liked} query={query} onLike={toggleLike} onOpen={p=>setPage({type:'problem',data:p})} onReport={()=>setPage({type:'report'})}/>:tab===footerPages[2]&&!query?<ProjectsPage projects={projects} onOpen={p=>setPage({type:'project',data:p})}/>:<>
+   {loading&&<p className="api-banner" role="status">불편함 목록을 불러오는 중이에요…</p>}
+   {apiError&&<div className="api-banner error" role="alert">{apiError}<button onClick={()=>setReload(n=>n+1)}>다시 시도</button></div>}
+   {page?.type==='login'?<LoginPage onBack={()=>{setPage(null);setTab(footerPages[0]);}}/>:(page?.type==='profile'||tab==='마이페이지')?<MyPage problems={problems} projects={projects} liked={liked} onIssue={p=>setPage({type:'problem',data:p})} onProject={p=>setPage({type:'project',data:p})} onReport={()=>setPage({type:'report'})}/>:page?.type==='report'?<ReportPage onBack={()=>setPage(null)} onSubmit={saveProblem}/>:page?.type==='problem'?<IssueDetailPage key={page.data.id} problem={problems.find(p=>p.id===page.data.id)||page.data} liked={liked.includes(page.data.id)} onLike={()=>toggleLike(page.data.id)} onBack={()=>setPage(null)} onProject={()=>{setPage(null);setTab(footerPages[2]);}}/>:page?.type==='project'?<ProjectDetailPage key={page.data.id} project={page.data} onBack={()=>setPage(null)} onIssues={()=>{setPage(null);setTab(footerPages[1]);}}/>:tab===footerPages[1]?<ExplorePage problems={problems} liked={liked} query={query} onLike={toggleLike} onOpen={p=>setPage({type:'problem',data:p})} onReport={()=>setPage({type:'report'})}/>:tab===footerPages[2]&&!query?<ProjectsPage projects={projects} onOpen={p=>setPage({type:'project',data:p})}/>:<>
    {tab==='서비스 소개'&&!query?<ReadmePage onReport={()=>setPage({type:'report'})} onProjects={()=>setTab(footerPages[2])}/>:<>
    {tab==='홈'&&!query&&<>
     <section className="hero" aria-labelledby="hero-title"><div className="hero-copy"><div className="hero-line-numbers" aria-hidden="true">{Array.from({length:8},(_,i)=><span key={i}>{i+1}</span>)}</div><div className="hero-line-numbers" aria-hidden="true">{[1,2,3,4,5,6,7,8].map(number=><span key={number}>{number}</span>)}</div><p className="code-comment"><span className="numbered-line" data-line="1">// NEEDIT</span><span className="numbered-line" data-line="2">// 학생들의 불편함을 실제 서비스로 연결하는 플랫폼</span></p><h1 id="hero-title"><span className="numbered-line" data-line="3">당신의 불편함이</span><span className="numbered-line" data-line="4"><span>개발</span>로 해결되는 곳, <span>NEEDIT</span><span className="hero-caret" aria-hidden="true"/></span></h1><p className="hero-description"><span className="numbered-line" data-line="5">학교생활 속 불편함을 제보하고,</span><span className="numbered-line" data-line="6">컴퓨터학부 학생들과 함께 실질적인 해결책을 만들어가요.</span></p><div className="hero-spacer numbered-line" data-line="7" aria-hidden="true"/><div className="hero-actions numbered-line" data-line="8"><button className="button primary" onClick={()=>setPage({type:'report'})}><Icon name="pencil" size={28}/>불편함 제보하기</button><button className="button outline" onClick={()=>setTab('프로젝트')}><Icon name="code" size={29}/>프로젝트 둘러보기</button></div></div>
