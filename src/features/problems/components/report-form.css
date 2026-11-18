@@ -1,0 +1,140 @@
+.report-page {
+  width: min(100%, 660px);
+  margin-inline: auto;
+  padding-bottom: 34px;
+}
+
+.wp-page.report-page h1 {
+  margin: 0 0 16px;
+  font-size: clamp(26px, 4vw, 34px);
+}
+
+.report-page .wp-back { margin-bottom: 12px; }
+
+.report-form {
+  padding: clamp(16px, 4vw, 30px);
+  background: #20252b;
+  border: 1px solid #363e48;
+  border-radius: 16px;
+  min-width: 0;
+}
+
+.report-form__body label,
+.report-form__categories legend {
+  font-weight: 700;
+  color: #f0f3f8;
+}
+
+.report-form__hint {
+  margin: 6px 0 10px;
+  color: #b6c2d0;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.report-page .report-form__body textarea {
+  display: block;
+  width: 100%;
+  min-height: 136px;
+  background: #1b2027;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.report-form__preview {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #252f3d;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.report-form__preview span {
+  flex-shrink: 0;
+  color: var(--blue);
+}
+
+.report-form__preview strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-form__length {
+  margin: 5px 0 0;
+  color: #b6c2d0;
+  font-size: 13px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-form__categories {
+  min-width: 0;
+  margin: 17px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.report-form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.report-form__chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 7px 12px;
+  border: 1px solid #515d6d;
+  border-radius: 22px;
+  background: #262e37;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.report-page .report-form__chip input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  clip-path: inset(50%);
+}
+
+.report-form__check { visibility: hidden; }
+.report-form__chip:has(:checked) { border-color: var(--blue); background: #24364f; }
+.report-form__chip:has(:checked) .report-form__check { visibility: visible; color: var(--blue); font-weight: 800; }
+.report-form__chip:has(:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
+.report-form__chip:has(:disabled) { opacity: .65; cursor: not-allowed; }
+
+.report-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #3a424d;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+.report-form__actions button:disabled { opacity: .55; cursor: not-allowed; }
+.report-form__error { margin-top: 8px; color: #ffada4; }
+
+@media (max-width: 520px) {
+  .report-page { padding-bottom: 20px; }
+  .report-page .report-form__body textarea { min-height: 0; }
+  .report-form__chip { padding-inline: 9px; gap: 4px; font-size: 13px; }
+  .report-form__actions .button { flex: 1; }
+}

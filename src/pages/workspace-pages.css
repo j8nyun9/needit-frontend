@@ -28,6 +28,10 @@
 }
 .wp-rank-2 .wp-rank-label { color: #b9c8e9; }
 
+.wp-meta { flex-wrap: wrap; }
+.wp-meta-author { display: inline-flex; align-items: center; gap: 10px; }
+.wp-meta-time { margin-inline-start: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
 .wp-category-tooltip {
   position: fixed;
   z-index: 20;
