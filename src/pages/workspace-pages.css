@@ -27,3 +27,18 @@
   font-weight: 700;
 }
 .wp-rank-2 .wp-rank-label { color: #b9c8e9; }
+
+.wp-detail-actions > .wp-share { margin-left: 0; }
+.wp-share-status { color: #a9c8ff; font-size: 13px; }
+.wp-share-status:empty { display: none; }
+.wp-share-manual { flex-basis: 100%; overflow-wrap: anywhere; }
+.wp-share-manual input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px;
+  color: inherit;
+  background: #181c22;
+  border: 1px solid #58677a;
+  border-radius: 5px;
+}

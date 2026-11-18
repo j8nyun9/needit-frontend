@@ -22,16 +22,30 @@ const projects = [
 const footerPages = ['홈','불편함 탐색','프로젝트','서비스 소개','마이페이지'];
 
 export default function App(){
- const [tab,setTab]=useState('홈');
+ const [sharedIssueId] = useState(() => new URLSearchParams(window.location.search).get('issue'));
+ const [tab,setTab]=useState(sharedIssueId ? footerPages[1] : footerPages[0]);
  const [query,setQuery]=useState('');
  const [problems,setProblems]=useState([]);
- const [page,setPage]=useState(null);
+ const [selectedPage,setPage]=useState(sharedIssueId ? {type:'shared'} : null);
+ const sharedProblem = selectedPage?.type === 'shared'
+  ? problems.find(problem => String(problem.id) === sharedIssueId)
+  : null;
+ const page = sharedProblem ? {type:'problem',data:sharedProblem} : selectedPage;
  const [loading,setLoading]=useState(true);
  const [apiError,setApiError]=useState('');
  const [reload,setReload]=useState(0);
  useEffect(()=>{const controller=new AbortController();setLoading(true);setApiError('');listProblems(controller.signal).then(setProblems).catch(error=>{if(!controller.signal.aborted)setApiError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();},[reload]);
  async function saveProblem(data){const p=await createProblem(data);setProblems(prev=>[{...p,mine:true},...prev.filter(item=>item.id!==p.id)]);setApiError('');setTab(footerPages[1]);setPage(null);setNotice('불편함을 DB에 등록했어요.');}
- useEffect(()=>{setPage(null);},[tab]);
+ useEffect(()=>{
+  setPage(previous => previous?.type === 'shared' ? previous : null);
+ },[tab]);
+ useEffect(()=>{
+  if(selectedPage?.type === 'shared') return;
+  const url = new URL(window.location.href);
+  if(!url.searchParams.has('issue')) return;
+  url.searchParams.delete('issue');
+  window.history.replaceState(null,'',url.href);
+ },[selectedPage]);
  const [liked,setLiked]=useState([]);
  const [dialog,setDialog]=useState(null);
  const [notice,setNotice]=useState('');
@@ -51,7 +65,10 @@ export default function App(){
   <main>
    {loading&&<p className="api-banner" role="status">불편함 목록을 불러오는 중이에요…</p>}
    {apiError&&<div className="api-banner error" role="alert">{apiError}<button onClick={()=>setReload(n=>n+1)}>다시 시도</button></div>}
-   {page?.type==='login'?<LoginPage onBack={()=>{setPage(null);setTab(footerPages[0]);}}/>:(page?.type==='profile'||tab==='마이페이지')?<MyPage problems={problems} projects={projects} liked={liked} onIssue={p=>setPage({type:'problem',data:p})} onProject={p=>setPage({type:'project',data:p})} onReport={()=>setPage({type:'report'})}/>:page?.type==='report'?<ReportPage onBack={()=>setPage(null)} onSubmit={saveProblem}/>:page?.type==='problem'?<IssueDetailPage key={page.data.id} problem={problems.find(p=>p.id===page.data.id)||page.data} liked={liked.includes(page.data.id)} onLike={()=>toggleLike(page.data.id)} onBack={()=>setPage(null)} onProject={()=>{setPage(null);setTab(footerPages[2]);}}/>:page?.type==='project'?<ProjectDetailPage key={page.data.id} project={page.data} onBack={()=>setPage(null)} onIssues={()=>{setPage(null);setTab(footerPages[1]);}}/>:tab===footerPages[1]?<ExplorePage problems={problems} liked={liked} query={query} onLike={toggleLike} onOpen={p=>setPage({type:'problem',data:p})} onReport={()=>setPage({type:'report'})}/>:tab===footerPages[2]&&!query?<ProjectsPage projects={projects} onOpen={p=>setPage({type:'project',data:p})}/>:<>
+   {page?.type==='shared'?(!loading&&!apiError&&<div className="wp-page">
+    <p className="empty" role="status">이 링크의 제보를 찾을 수 없어요.</p>
+    <button className="button outline" onClick={()=>setPage(null)}>불편함 탐색으로</button>
+   </div>):page?.type==='login'?<LoginPage onBack={()=>{setPage(null);setTab(footerPages[0]);}}/>:(page?.type==='profile'||tab==='마이페이지')?<MyPage problems={problems} projects={projects} liked={liked} onIssue={p=>setPage({type:'problem',data:p})} onProject={p=>setPage({type:'project',data:p})} onReport={()=>setPage({type:'report'})}/>:page?.type==='report'?<ReportPage onBack={()=>setPage(null)} onSubmit={saveProblem}/>:page?.type==='problem'?<IssueDetailPage key={page.data.id} problem={problems.find(p=>p.id===page.data.id)||page.data} liked={liked.includes(page.data.id)} onLike={()=>toggleLike(page.data.id)} onBack={()=>setPage(null)} onProject={()=>{setPage(null);setTab(footerPages[2]);}}/>:page?.type==='project'?<ProjectDetailPage key={page.data.id} project={page.data} onBack={()=>setPage(null)} onIssues={()=>{setPage(null);setTab(footerPages[1]);}}/>:tab===footerPages[1]?<ExplorePage problems={problems} liked={liked} query={query} onLike={toggleLike} onOpen={p=>setPage({type:'problem',data:p})} onReport={()=>setPage({type:'report'})}/>:tab===footerPages[2]&&!query?<ProjectsPage projects={projects} onOpen={p=>setPage({type:'project',data:p})}/>:<>
    {tab==='서비스 소개'&&!query?<ReadmePage onReport={()=>setPage({type:'report'})} onProjects={()=>setTab(footerPages[2])}/>:<>
    {tab==='홈'&&!query&&<>
     <section className="hero" aria-labelledby="hero-title"><div className="hero-copy"><div className="hero-line-numbers" aria-hidden="true">{Array.from({length:8},(_,i)=><span key={i}>{i+1}</span>)}</div><div className="hero-line-numbers" aria-hidden="true">{[1,2,3,4,5,6,7,8].map(number=><span key={number}>{number}</span>)}</div><p className="code-comment"><span className="numbered-line" data-line="1">// NEEDIT</span><span className="numbered-line" data-line="2">// 학생들의 불편함을 실제 서비스로 연결하는 플랫폼</span></p><h1 id="hero-title"><span className="numbered-line" data-line="3">당신의 불편함이</span><span className="numbered-line" data-line="4"><span>개발</span>로 해결되는 곳, <span>NEEDIT</span><span className="hero-caret" aria-hidden="true"/></span></h1><p className="hero-description"><span className="numbered-line" data-line="5">학교생활 속 불편함을 제보하고,</span><span className="numbered-line" data-line="6">컴퓨터학부 학생들과 함께 실질적인 해결책을 만들어가요.</span></p><div className="hero-spacer numbered-line" data-line="7" aria-hidden="true"/><div className="hero-actions numbered-line" data-line="8"><button className="button primary" onClick={()=>setPage({type:'report'})}><Icon name="pencil" size={28}/>불편함 제보하기</button><button className="button outline" onClick={()=>setTab('프로젝트')}><Icon name="code" size={29}/>프로젝트 둘러보기</button></div></div>
