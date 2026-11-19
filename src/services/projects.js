@@ -5,6 +5,8 @@ export function normalizeProject(p){return {...p,description:p.description||p.su
 export async function listProjects(signal){const rows=await apiRequest('/projects',{signal});if(!Array.isArray(rows))throw new Error('프로젝트 목록 형식이 올바르지 않아요.');return rows.map(normalizeProject);}
 export async function getProject(id,signal){return normalizeProject(await apiRequest(`/projects/${encodeURIComponent(id)}`,{signal}));}
 export async function saveProject(id,data){return normalizeProject(await apiRequest(`/projects/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}));}
+export async function registerService(data){return normalizeProject(await apiRequest('/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}));}
+export async function unpublishService(id){return normalizeProject(await apiRequest(`/projects/${encodeURIComponent(id)}/unpublish`,{method:'POST'}));}
 export const favoriteProject=(id,interested)=>apiRequest(`/projects/${encodeURIComponent(id)}/favorite`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({interested})});
 export const postFeedback=(id,data)=>apiRequest(`/projects/${encodeURIComponent(id)}/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 export const listNotifications=signal=>apiRequest('/projects/notifications',{signal});
