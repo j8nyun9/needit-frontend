@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Icon from './components/common/Icon.jsx';
 import {AuthContext,LoginRequired} from './contexts/AuthContext.jsx';
 import {listProblems,createProblem,setProblemLike} from './services/problems.js';
+import {mergeSavedLikes} from './services/problemLikeState.js';
 import ReportPage from './features/problems/components/ReportPage.jsx';
 import MyPage from './pages/MyPage.jsx';
 import {ProjectsPage,ProjectDetailPage,ProjectNotifications} from './pages/ProjectReleasePages.jsx';
@@ -24,6 +25,8 @@ const footerPages = ['홈','불편함 탐색','프로젝트','서비스 소개',
 
 export default function App(){
  const [user,setUser]=useState(null);
+ const voter=useRef(user?.id);voter.current=user?.id;
+ const voteRevision=useRef(0);const savedVotes=useRef(new Map());
  const [projects,setProjects]=useState([]);
  const [projectError,setProjectError]=useState('');
  const [projectReload,setProjectReload]=useState(0);
@@ -48,7 +51,16 @@ export default function App(){
  const [loading,setLoading]=useState(true);
  const [apiError,setApiError]=useState('');
  const [reload,setReload]=useState(0);
- useEffect(()=>{const controller=new AbortController();setLoading(true);setProblems([]);setApiError('');listProblems(controller.signal).then(rows=>{setProblems(rows);setLiked(rows.filter(p=>p.liked_by_me).map(p=>p.id));}).catch(error=>{if(!controller.signal.aborted)setApiError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();},[reload,user?.id]);
+ useEffect(()=>{
+  const controller=new AbortController();const account=user?.id;const revision=voteRevision.current;
+  setLoading(true);setProblems([]);setApiError('');
+  listProblems(controller.signal).then(rows=>{
+   if(controller.signal.aborted||voter.current!==account)return;
+   const merged=mergeSavedLikes(rows,savedVotes.current,revision,account);
+   setProblems(merged);setLiked(merged.filter(p=>p.liked_by_me).map(p=>p.id));
+  }).catch(error=>{if(!controller.signal.aborted)setApiError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
+  return()=>controller.abort();
+ },[reload,user?.id]);
  function updateProblem(row){setProblems(prev=>prev.map(p=>p.id===row.id?{...p,...row,mine:p.mine,count:p.count}:p));}
  async function saveProblem(data){if(!requireLogin())throw new Error('로그인이 필요해요.');const p=await createProblem(data);setProblems(prev=>[{...p,mine:true},...prev.filter(item=>item.id!==p.id)]);setApiError('');setTab(footerPages[1]);setPage(null);setNotice('불편함을 DB에 등록했어요.');}
  useEffect(()=>{
@@ -70,7 +82,18 @@ export default function App(){
  const filteredProblems=problems.filter(p=>(p.title+p.category).includes(query));
  const filteredProjects=projects.filter(p=>(p.title+p.description).includes(query));
  const liking=useRef(new Set());
- async function toggleLike(id){if(!requireLogin()||liking.current.has(id))return;liking.current.add(id);try{const row=await setProblemLike(id,!liked.includes(id));setLiked(prev=>row.liked_by_me?[...new Set([...prev,id])]:prev.filter(x=>x!==id));setProblems(prev=>prev.map(p=>p.id===id?{...p,count:Number(row.likes_count),liked_by_me:row.liked_by_me}:p));}catch(e){setNotice(e.message);}finally{liking.current.delete(id);}}
+ async function toggleLike(id){
+  if(!requireLogin())return;
+  const account=user.id;const key=`${account}:${id}`;
+  if(liking.current.has(key))return;liking.current.add(key);
+  try{
+   const row=await setProblemLike(id,!liked.includes(id));
+   if(voter.current!==account)return;
+   savedVotes.current.set(String(id),{...row,userId:account,revision:++voteRevision.current});
+   setLiked(prev=>row.liked_by_me?[...new Set([...prev,id])]:prev.filter(x=>x!==id));
+   setProblems(prev=>prev.map(p=>p.id===id?{...p,count:row.likes_count,likes_count:row.likes_count,liked_by_me:row.liked_by_me}:p));
+  }catch(e){if(voter.current===account)setNotice(e.message);}finally{liking.current.delete(key);}
+ }
 
  return <AuthContext.Provider value={{user,requireLogin}}>
   <header className="header"><div className="header-inner">

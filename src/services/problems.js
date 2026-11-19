@@ -1,6 +1,10 @@
 import {getToken,refreshSession} from './auth.js';
 export {request as apiRequest};
-export function setProblemLike(id,liked){return request(`/problems/${encodeURIComponent(id)}/likes/me`,{method:liked?'PUT':'DELETE'});}
+export async function setProblemLike(id,liked){
+ const row=await request(`/problems/${encodeURIComponent(id)}/likes/me`,{method:liked?'PUT':'DELETE'});
+ if(typeof row?.liked_by_me!=='boolean'||row.likes_count==null||!Number.isFinite(Number(row.likes_count))||Number(row.likes_count)<0)throw new Error('공감 저장 결과를 확인하지 못했어요. 다시 시도해주세요.');
+ return {...row,likes_count:Number(row.likes_count)};
+}
 import { normalizeProblemCategory } from './problemCategories.js';
 
 const base=(import.meta.env.VITE_API_BASE_URL||(import.meta.env.PROD?'https://needit-backend-d3lv.onrender.com/api':'/api')).replace(/\/$/,'');
