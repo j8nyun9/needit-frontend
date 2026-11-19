@@ -1,7 +1,8 @@
 import React,{useEffect,useRef,useState} from 'react';
 import Icon from '../components/common/Icon.jsx';
 import {useAuth} from '../contexts/AuthContext.jsx';
-import {getProject,saveProject,favoriteProject,postFeedback,releaseStatuses,serviceUrl,listNotifications,readNotification} from '../services/projects.js';
+import {createProject,getProject,saveProject,favoriteProject,postFeedback,releaseStatuses,serviceUrl,listNotifications,readNotification} from '../services/projects.js';
+import {getProblem} from '../services/problems.js';
 import './project-release.css';
 
 export function ServiceLink({project}){
@@ -18,6 +19,88 @@ export function ProjectsPage({projects,onOpen}){
  const rows=projects.filter(p=>status==='전체'||p.status===status);
  return <div className="wp-page"><p className="code-comment">// FROM ISSUE TO SERVICE</p><h1>함께 만드는 <span>프로젝트</span></h1><p className="wp-demo">학생들의 불편함에서 시작된 서비스를 만나보세요.</p><div className="release-filters" aria-label="프로젝트 상태 필터">{['전체',...releaseStatuses].map(s=><button className={'button '+(s===status?'primary':'outline')} aria-pressed={s===status} key={s} onClick={()=>setStatus(s)}>{s}</button>)}</div><div className="wp-project-grid">{rows.map(p=><article className="wp-box" key={p.id}><h2><button onClick={()=>onOpen(p)}>{p.title} →</button></h2><div className="wp-box-body"><span className={'status '+(p.status==='서비스 운영 중'?'release-live':'developing')}>{p.status}</span><p className="wp-long-copy">{p.description}</p><div className="progress-track"><div style={{width:`${p.progress}%`}}/></div><div className="release-actions"><button className="button outline" onClick={()=>onOpen(p)}>프로젝트 살펴보기</button><ServiceLink project={p}/></div></div></article>)}</div>{!rows.length&&<p className="empty">해당 상태의 프로젝트가 없어요.</p>}</div>;
 }
+
+export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdate, onOpenProject }) {
+ const plan=problem.ai_plan;
+ const details=plan.hackathonPlan;
+ const [draft,setDraft]=useState(()=>({
+  title: (details?.projectName?.trim() || plan.title?.trim() || problem.title).slice(0,100),
+  description: plan.problem_definition || details?.problem_definition || problem.description || problem.content || '',
+  features: (plan.recommended_features || details?.features || []).join('\n'),
+ }));
+ const [busy,setBusy]=useState(false);
+ const [error,setError]=useState('');
+ const [conflict,setConflict]=useState(false);
+ const [projectId,setProjectId]=useState(problem.project_id ?? null);
+ const request=useRef(null);
+ useEffect(()=>()=>request.current?.abort(),[]);
+ const features=draft.features.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+ const invalidFeatures=features.length>10||features.some(line=>line.length>250);
+ const change=event=>setDraft(previous=>({...previous,[event.target.name]:event.target.value}));
+
+ async function refreshProblem(signal) {
+  const issue=await getProblem(problem.id,signal);
+  if(signal.aborted)return;
+  setProjectId(issue.project_id ?? null);
+  setConflict(issue.project_id != null);
+  onProblemUpdate(issue);
+ }
+
+ async function run(action) {
+  if(request.current)return;
+  const controller=new AbortController();
+  request.current=controller;
+  setBusy(true);
+  setError('');
+  try{await action(controller.signal);}
+  catch(error){if(!controller.signal.aborted)setError(error.message);}
+  finally{
+   request.current=null;
+   if(!controller.signal.aborted)setBusy(false);
+  }
+ }
+
+ function submit(event) {
+  event.preventDefault();
+  if(conflict||projectId!=null||invalidFeatures||!draft.title.trim()||!draft.description.trim())return;
+  run(async signal=>{
+   try{
+    const project=await createProject({
+     title:draft.title.trim(),description:draft.description.trim(),features,problem_id:problem.id,
+    },signal);
+    if(!signal.aborted)onCreated(project,problem.id);
+   }catch(error){
+    if(signal.aborted)return;
+    if(error.status!==409)throw error;
+    setConflict(true);
+    await refreshProblem(signal);
+   }
+  });
+ }
+
+ return <div className="wp-page release-create">
+  <h1>프로젝트 등록</h1>
+  <form className="release-editor" onSubmit={submit}>
+   <p className="release-source">원본 불편함 <strong>#{problem.id} {problem.title}</strong></p>
+   <fieldset disabled={busy}>
+    <label>프로젝트 제목<input name="title" required maxLength={100} value={draft.title} onChange={change}/></label>
+    <label>프로젝트 설명<textarea name="description" rows={6} required maxLength={5000} value={draft.description} onChange={change}/></label>
+    <label>주요 기능<textarea name="features" rows={4} value={draft.features} onChange={change}
+      aria-invalid={invalidFeatures} placeholder="기능을 한 줄에 하나씩 입력해주세요."/></label>
+    {invalidFeatures&&<p className="release-error" role="alert">주요 기능은 10개까지, 한 줄에 250자까지 입력할 수 있어요.</p>}
+    {(conflict||projectId!=null)&&<p className="release-error" role="status">이미 다른 프로젝트에 채택된 불편함이에요.</p>}
+    {error&&<p className="release-error" role="alert">{error}</p>}
+    <div className="release-actions">
+     {projectId!=null?<button className="button primary" type="button" onClick={()=>onOpenProject({id:projectId})}>연결된 프로젝트 보기</button>
+      :conflict?<button className="button outline" type="button" onClick={()=>run(refreshProblem)}>채택 상태 다시 확인</button>
+      :<button className="button primary" type="submit" disabled={invalidFeatures||!draft.title.trim()||!draft.description.trim()}>{busy?'등록 중…':'프로젝트 등록하기'}</button>}
+     <button className="button outline" type="button" onClick={onCancel}>취소</button>
+    </div>
+   </fieldset>
+  </form>
+ </div>;
+}
+
 function PublicationEditor({project,onSaved,onCancel}){
  const [data,setData]=useState({release_status:releaseStatuses.includes(project.status)?project.status:'개발 중',deployment_url:project.deployment_url||'',usage_guide:project.usage_guide||''});
  const [busy,setBusy]=useState(false);const [error,setError]=useState('');const lock=useRef(false);
