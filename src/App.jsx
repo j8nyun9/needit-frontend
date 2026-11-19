@@ -25,8 +25,18 @@ const footerPages = ['홈','불편함 탐색','프로젝트','서비스 소개',
 
 export default function App(){
  const [user,setUser]=useState(null);
+ const [authLoading,setAuthLoading]=useState(true);
+ function updateProfile(profile){setUser(previous=>previous?.id===profile.id?{...previous,name:profile.name}:previous);}
  const voter=useRef(user?.id);voter.current=user?.id;
  const voteRevision=useRef(0);const savedVotes=useRef(new Map());
+ const deletedProblems=useRef(new Set());
+ function handleProblemDeleted(id){
+  deletedProblems.current.add(String(id));savedVotes.current.delete(String(id));
+  setProblems(prev=>prev.filter(p=>String(p.id)!==String(id)));
+  setLiked(prev=>prev.filter(value=>String(value)!==String(id)));
+  setProjects(prev=>prev.map(p=>({...p,problem_ids:p.problem_ids?.filter(value=>String(value)!==String(id))})));
+  setPage(null);setNotice('불편함을 삭제했어요.');
+ }
  const [projects,setProjects]=useState([]);
  const [projectError,setProjectError]=useState('');
  const [projectReload,setProjectReload]=useState(0);
@@ -35,13 +45,14 @@ export default function App(){
  function openProject(row){setPageState({type:'project',data:row});}
 
  useEffect(()=>{const expired=()=>{setUser(null);setPageState({type:'login'});setNotice('로그인이 만료됐어요. 다시 로그인해주세요.');};window.addEventListener('needit-auth-expired',expired);return()=>window.removeEventListener('needit-auth-expired',expired);},[]);
- useEffect(()=>{let active=true;currentUser().then(value=>{if(active)setUser(value);}).catch(error=>{if(active)setNotice(error.message);});return()=>{active=false;};},[]);
+ useEffect(()=>{let active=true;currentUser().then(value=>{if(active)setUser(value);}).catch(error=>{if(active)setNotice(error.message);}).finally(()=>{if(active)setAuthLoading(false);});return()=>{active=false;};},[]);
  async function signOut(){try{await logout();}catch{setNotice('서버 로그아웃을 확인하지 못했어요. 이 브라우저의 로그인 정보는 지웠어요.');}finally{setUser(null);setLiked([]);setProblems(prev=>prev.map(p=>({...p,mine:false})));setTab(footerPages[0]);setPage(null);}}
  const [sharedIssueId] = useState(() => new URLSearchParams(window.location.search).get('issue'));
- const [tab,setTab]=useState(sharedIssueId ? footerPages[1] : footerPages[0]);
+ const [tab,setTab]=useState(()=>{if(sharedIssueId)return footerPages[1];try{const saved=sessionStorage.getItem('needit-active-tab');return footerPages.includes(saved)?saved:footerPages[0];}catch{return footerPages[0];}});
  const [query,setQuery]=useState('');
  const [problems,setProblems]=useState([]);
  const [selectedPage,setPageState]=useState(sharedIssueId ? {type:'shared'} : null);
+ useEffect(()=>{if(selectedPage?.type==='login')return;try{sessionStorage.setItem('needit-active-tab',selectedPage?.type==='profile'?footerPages[4]:tab);}catch{/* Navigation preference only. */}},[tab,selectedPage?.type]);
  function requireLogin(){if(user)return true;setNotice('로그인 후 사용할 수 있는 기능이에요.');setQuery('');setPageState({type:'login'});return false;}
  function setPage(value){if(typeof value==='function'){setPageState(value);return;}if(['report','profile'].includes(value?.type)&&!requireLogin())return;setPageState(value);}
  const sharedProblem = selectedPage?.type === 'shared'
@@ -56,7 +67,7 @@ export default function App(){
   setLoading(true);setProblems([]);setApiError('');
   listProblems(controller.signal).then(rows=>{
    if(controller.signal.aborted||voter.current!==account)return;
-   const merged=mergeSavedLikes(rows,savedVotes.current,revision,account);
+   const merged=mergeSavedLikes(rows,savedVotes.current,revision,account).filter(p=>!deletedProblems.current.has(String(p.id)));
    setProblems(merged);setLiked(merged.filter(p=>p.liked_by_me).map(p=>p.id));
   }).catch(error=>{if(!controller.signal.aborted)setApiError(error.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
   return()=>controller.abort();
@@ -106,10 +117,10 @@ export default function App(){
 
    {loading&&<p className="api-banner" role="status">불편함 목록을 불러오는 중이에요…</p>}
    {apiError&&<div className="api-banner error" role="alert">{apiError}<button onClick={()=>setReload(n=>n+1)}>다시 시도</button></div>}
-   {!user&&page?.type!=='login'&&(page?.type==='profile'||tab===footerPages[4])?<LoginRequired onLogin={requireLogin}/>:page?.type==='shared'?(!loading&&!apiError&&<div className="wp-page">
+   {authLoading&&(page?.type==='profile'||tab===footerPages[4])?<p className="wp-page" role="status">로그인 정보를 불러오는 중이에요…</p>:!user&&page?.type!=='login'&&(page?.type==='profile'||tab===footerPages[4])?<LoginRequired onLogin={requireLogin}/>:page?.type==='shared'?(!loading&&!apiError&&<div className="wp-page">
     <p className="empty" role="status">이 링크의 제보를 찾을 수 없어요.</p>
     <button className="button outline" onClick={()=>setPage(null)}>불편함 탐색으로</button>
-   </div>):page?.type==='login'?<LoginPage onLogin={value=>{setUser(value);setQuery('');setTab(footerPages[4]);setPage(null);setNotice(`${value.name}님, 환영해요!`);}} onBack={()=>{setPage(null);setTab(footerPages[0]);}}/>:(page?.type==='profile'||(tab==='마이페이지'&&!page))?<MyPage key={user?.id||'guest'} user={user} problems={problems} projects={projects} liked={liked} onIssue={p=>setPage({type:'problem',data:p})} onProject={p=>setPage({type:'project',data:p})} onReport={()=>setPage({type:'report'})}/>:page?.type==='report'?<ReportPage onBack={()=>setPage(null)} onSubmit={saveProblem}/>:page?.type==='problem'?<IssueDetailPage projects={projects} onOpenProject={openProject} onProblemUpdate={updateProblem} key={page.data.id} problem={problems.find(p=>p.id===page.data.id)||page.data} liked={liked.includes(page.data.id)} onLike={()=>toggleLike(page.data.id)} onBack={()=>setPage(null)} onProject={()=>{setPage(null);setTab(footerPages[2]);}}/>:page?.type==='project'?<ProjectDetailPage key={page.data.id} project={projects.find(p=>String(p.id)===String(page.data.id))||page.data} onUpdate={updateProject} onIssue={p=>setPage({type:"problem",data:problems.find(row=>String(row.id)===String(p.id))||p})} onBack={()=>setPage(null)} onIssues={()=>{setPage(null);setTab(footerPages[1]);}}/>:tab===footerPages[1]?<ExplorePage onProblemUpdate={updateProblem} problems={problems} liked={liked} query={query} onLike={toggleLike} onOpen={p=>setPage({type:'problem',data:p})} onReport={()=>setPage({type:'report'})}/>:tab===footerPages[2]&&!query?<ProjectsPage projects={projects} onOpen={p=>setPage({type:'project',data:p})}/>:<>
+   </div>):page?.type==='login'?<LoginPage onLogin={value=>{setUser(value);setQuery('');setTab(footerPages[4]);setPage(null);setNotice(`${value.name}님, 환영해요!`);}} onBack={()=>{setPage(null);setTab(footerPages[0]);}}/>:(page?.type==='profile'||(tab==='마이페이지'&&!page))?<MyPage onProfileUpdate={updateProfile} key={user?.id||'guest'} user={user} problems={problems} projects={projects} liked={liked} onIssue={p=>setPage({type:'problem',data:p})} onProject={p=>setPage({type:'project',data:p})} onReport={()=>setPage({type:'report'})}/>:page?.type==='report'?<ReportPage onBack={()=>setPage(null)} onSubmit={saveProblem}/>:page?.type==='problem'?<IssueDetailPage onDeleted={handleProblemDeleted} projects={projects} onOpenProject={openProject} onProblemUpdate={updateProblem} key={page.data.id} problem={problems.find(p=>p.id===page.data.id)||page.data} liked={liked.includes(page.data.id)} onLike={()=>toggleLike(page.data.id)} onBack={()=>setPage(null)} onProject={()=>{setPage(null);setTab(footerPages[2]);}}/>:page?.type==='project'?<ProjectDetailPage key={page.data.id} project={projects.find(p=>String(p.id)===String(page.data.id))||page.data} onUpdate={updateProject} onIssue={p=>setPage({type:"problem",data:problems.find(row=>String(row.id)===String(p.id))||p})} onBack={()=>setPage(null)} onIssues={()=>{setPage(null);setTab(footerPages[1]);}}/>:tab===footerPages[1]?<ExplorePage onProblemUpdate={updateProblem} problems={problems} liked={liked} query={query} onLike={toggleLike} onOpen={p=>setPage({type:'problem',data:p})} onReport={()=>setPage({type:'report'})}/>:tab===footerPages[2]&&!query?<ProjectsPage projects={projects} onOpen={p=>setPage({type:'project',data:p})}/>:<>
    {tab==='서비스 소개'&&!query?<ReadmePage onReport={()=>setPage({type:'report'})} onProjects={()=>setTab(footerPages[2])}/>:<>
    {tab==='홈'&&!query&&<>
     <section className="hero" aria-labelledby="hero-title"><div className="hero-copy"><div className="hero-line-numbers" aria-hidden="true">{Array.from({length:8},(_,i)=><span key={i}>{i+1}</span>)}</div><div className="hero-line-numbers" aria-hidden="true">{[1,2,3,4,5,6,7,8].map(number=><span key={number}>{number}</span>)}</div><p className="code-comment"><span className="numbered-line" data-line="1">// NEEDIT</span><span className="numbered-line" data-line="2">// 학생들의 불편함을 실제 서비스로 연결하는 플랫폼</span></p><h1 id="hero-title"><span className="numbered-line" data-line="3">당신의 불편함이</span><span className="numbered-line" data-line="4"><span>개발</span>로 해결되는 곳, <span>NEEDIT</span><span className="hero-caret" aria-hidden="true"/></span></h1><p className="hero-description"><span className="numbered-line" data-line="5">학교생활 속 불편함을 제보하고,</span><span className="numbered-line" data-line="6">컴퓨터학부 학생들과 함께 실질적인 해결책을 만들어가요.</span></p><div className="hero-spacer numbered-line" data-line="7" aria-hidden="true"/><div className="hero-actions numbered-line" data-line="8"><button className="button primary" onClick={()=>setPage({type:'report'})}><Icon name="pencil" size={28}/>불편함 제보하기</button><button className="button outline" onClick={()=>setTab('프로젝트')}><Icon name="code" size={29}/>프로젝트 둘러보기</button></div></div>
