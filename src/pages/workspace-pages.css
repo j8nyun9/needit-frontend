@@ -66,3 +66,14 @@
 
 .wp-adopted { display: inline-flex; width: fit-content; margin-bottom: 8px; }
 .wp-detail-actions .wp-adopted { margin-bottom: 0; }
+
+.wp-issue-card > .wp-project-summary {
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.wp-project-summary > span { white-space: nowrap; }
+.wp-project-summary-separator { margin-inline-end: 8px; }

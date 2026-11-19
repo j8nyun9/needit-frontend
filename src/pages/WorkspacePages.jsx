@@ -74,6 +74,21 @@ function CategoryFilterButton({ name, example, selected, onSelect }) {
   </>;
 }
 
+function IssueProjectSummary({ problem }) {
+  const { project_count: connected, deployed_project_count: deployed } = problem;
+  const hasConnected = Number.isInteger(connected) && connected >= 0;
+  const hasDeployed = Number.isInteger(deployed) && deployed >= 0;
+  if (!hasConnected && !hasDeployed) return null;
+
+  return <div className="wp-project-summary">
+    {hasConnected && <span>연결된 프로젝트 {connected}개</span>}
+    {hasDeployed && <span>
+      {hasConnected && <span className="wp-project-summary-separator" aria-hidden="true">·</span>}
+      배포된 프로젝트 {deployed}개
+    </span>}
+  </div>;
+}
+
 export function ExplorePage({problems,liked,onLike,onOpen,onReport,onProblemUpdate,onCreateProject,onOpenProject,query=''}){const[planProblem,setPlanProblem]=useState(null);const[search,setSearch]=useState('');const[category,setCategory]=useState(allCategories);const[sort,setSort]=useState('latest');const items=problems.filter(p=>(category===allCategories||p.category===category)&&(p.title+desc(p)).includes(search||query)).sort((a,b)=>sort==='popular'?b.count-a.count:(new Date(b.created_at||0)-new Date(a.created_at||0)));return <div className="wp-page"><section className="wp-explore-hero"><div><p className="code-comment">// NEEDIT<br/>// 대학생활 속 불편함을 함께 찾아 해결해요</p><h1>불편함 <span>탐색</span></h1><p>학교생활, 학사행정, 시설 등에서 겪는 다양한 불편함을 둘러보고,<br/>공감하는 문제에 의견을 남기거나, 해결해볼 아이디어를 떠올려보세요.</p></div><div className="wp-code"><div>🔴 🟡 🟢 <span>needit.ts</span></div><code><i>1</i> <b>const</b> explore = <em>"학생들의 불편함을 발견하고,"</em><br/><i>2</i> <b>const</b> solve = <em>"함께 해결해나가는 과정"</em>;<br/><i>3</i> <span>// Explore Inconveniences</span></code></div></section><div className="wp-filters"><label><Icon name="search" size={20}/><input aria-label="불편함 검색" placeholder="제목, 내용, 키워드로 검색해보세요" value={search} onChange={e=>setSearch(e.target.value)}/></label><div className="wp-chips">
         <button type="button" className={category === allCategories ? 'selected' : ''} aria-pressed={category === allCategories} onClick={() => setCategory(allCategories)}>{allCategories}</button>
         {problemCategories.map(({ name, example }) => (
@@ -84,7 +99,20 @@ export function ExplorePage({problems,liked,onLike,onOpen,onReport,onProblemUpda
  const cardClass=rank?`wp-issue-card wp-rank-${rank}`:'wp-issue-card';
  return <article className={cardClass} key={p.id}>
   {rank&&<span className="wp-rank-label">인기 {rank}위</span>}
-  <div><span className="issue-id">#{p.id}</span><button className="wp-card-title" onClick={()=>onOpen(p)}>{p.title}</button><span className="category">{p.category}</span></div><p>{desc(p)}</p>{p.project_id!=null&&<span className="status developing wp-adopted">프로젝트 채택 완료</span>}<footer><button className="wp-ai-trigger" onClick={()=>setPlanProblem(p)}><Icon name="sparkles" size={17}/>{p.ai_plan?'AI 기획안 보기':'AI 기획안 만들기'}</button><button className={liked.includes(p.id)?'wp-liked':''} onClick={()=>onLike(p.id)} aria-pressed={liked.includes(p.id)}><Icon name="heart" size={20}/>{p.count}</button><button onClick={()=>onOpen(p)}>댓글 보기</button><button className="wp-card-arrow" aria-label={`${p.title} 상세 보기`} onClick={()=>onOpen(p)}><Icon name="arrow" size={19}/></button></footer></article>;})}</div>{planProblem&&<AiPlanDialog problem={planProblem} onClose={()=>setPlanProblem(null)} onUpdate={onProblemUpdate} onCreateProject={onCreateProject} onOpenProject={onOpenProject}/>}{!items.length&&<p className="empty">조건에 맞는 불편함이 없어요.</p>}</div>}
+  <div>
+    <span className="issue-id">#{p.id}</span>
+    <button className="wp-card-title" onClick={()=>onOpen(p)}>{p.title}</button>
+    <span className="category">{p.category}</span>
+  </div>
+  <p>{desc(p)}</p>
+  <footer>
+    <button className="wp-ai-trigger" onClick={()=>setPlanProblem(p)}><Icon name="sparkles" size={17}/>{p.ai_plan?'AI 기획안 보기':'AI 기획안 만들기'}</button>
+    <button className={liked.includes(p.id)?'wp-liked':''} onClick={()=>onLike(p.id)} aria-pressed={liked.includes(p.id)}><Icon name="heart" size={20}/>{p.count}</button>
+    <button onClick={()=>onOpen(p)}>댓글 보기</button>
+    <button className="wp-card-arrow" aria-label={`${p.title} 상세 보기`} onClick={()=>onOpen(p)}><Icon name="arrow" size={19}/></button>
+  </footer>
+  <IssueProjectSummary problem={p}/>
+  </article>;})}</div>{planProblem&&<AiPlanDialog problem={planProblem} onClose={()=>setPlanProblem(null)} onUpdate={onProblemUpdate} onCreateProject={onCreateProject} onOpenProject={onOpenProject}/>}{!items.length&&<p className="empty">조건에 맞는 불편함이 없어요.</p>}</div>}
 const issueDateFormatter = new Intl.DateTimeFormat('ko-KR', {
   dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23', timeZone: 'Asia/Seoul',
 });
