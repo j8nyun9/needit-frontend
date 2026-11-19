@@ -10,6 +10,8 @@ export async function createProject(data,signal){
  return normalizeProject(project);
 }
 export async function saveProject(id,data){return normalizeProject(await apiRequest(`/projects/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}));}
+export async function registerService(data){return normalizeProject(await apiRequest('/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}));}
+export async function unpublishService(id){return normalizeProject(await apiRequest(`/projects/${encodeURIComponent(id)}/unpublish`,{method:'POST'}));}
 export const favoriteProject=(id,interested)=>apiRequest(`/projects/${encodeURIComponent(id)}/favorite`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({interested})});
 export const postFeedback=(id,data)=>apiRequest(`/projects/${encodeURIComponent(id)}/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 export const listNotifications=signal=>apiRequest('/projects/notifications',{signal});
