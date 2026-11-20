@@ -165,7 +165,7 @@ export default function App(){
    <button type="button" className="button outline" onClick={backToExplore}>불편함 탐색으로</button>
   </div>;
   const problem=detail.problem;
-  const canEdit=Boolean(user)&&(problem.can_edit===true||(problem.can_edit==null&&problem.mine===true));
+  const canEdit=Boolean(user)&&problem.mine===true&&problem.can_edit!==false;
   const returnToDetail=()=>setPage({type:'problem',data:{id:problem.id}});
   if(editingProblem){
    if(!problemEditingEnabled||!canEdit)return <div className="wp-page">

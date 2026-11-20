@@ -9,7 +9,7 @@ export async function setProblemLike(id,liked){
 import { normalizeProblemCategory } from './problemCategories.js';
 
 const base=(import.meta.env.VITE_API_BASE_URL||(import.meta.env.PROD?'https://needit-backend-d3lv.onrender.com/api':'/api')).replace(/\/$/,'');
-export const problemEditingEnabled=import.meta.env.VITE_ENABLE_PROBLEM_EDIT==='true';
+export const problemEditingEnabled=import.meta.env.VITE_ENABLE_PROBLEM_EDIT!=='false';
 export function normalizeProblem(row){return {...row,description:row.content||'',category:normalizeProblemCategory(row.category),count:Number(row.likes_count??row.count??0)};}
 async function request(path,options={},retried=false){
  const sentToken=getToken();

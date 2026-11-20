@@ -1,9 +1,14 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import Icon from './Icon.jsx';
+import {useAuth} from '../../contexts/AuthContext.jsx';
 import { copyIssueLink, issueShareUrl } from './IssueShare.jsx';
 import ProblemDeleteDialog from './ProblemDeleteDialog.jsx';
 
 export default function IssueActionsMenu({ problem, onEdit, canDelete, onDeleted }) {
+  const {user}=useAuth();
+  const own=Boolean(user?.id)&&problem.mine===true;
+  const canEdit=own&&problem.can_edit!==false&&Boolean(onEdit);
+  const mayDelete=own&&problem.can_delete===true&&canDelete;
   const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [shareStatus, setShareStatus] = useState('');
@@ -49,8 +54,8 @@ export default function IssueActionsMenu({ problem, onEdit, canDelete, onDeleted
       <span aria-hidden="true">⋮</span>
     </button>
     {open && <div className="wp-issue-menu" id={menuId} ref={menu}>
-      {onEdit && <button type="button" onClick={onEdit}>수정<Icon name="pencil" size={18}/></button>}
-      {canDelete && <button type="button" className="wp-issue-menu-danger"
+      {canEdit && <button type="button" onClick={onEdit}>수정<Icon name="pencil" size={18}/></button>}
+      {mayDelete && <button type="button" className="wp-issue-menu-danger"
         onClick={() => { setOpen(false); setDeleting(true); }}>삭제<Icon name="trash" size={18}/></button>}
       <button type="button" onClick={share}>URL 공유<Icon name="link" size={18}/></button>
     </div>}
@@ -59,7 +64,7 @@ export default function IssueActionsMenu({ problem, onEdit, canDelete, onDeleted
       제보 링크를 선택해서 복사하세요.
       <input readOnly value={issueShareUrl(problem.id)} onFocus={event => event.target.select()}/>
     </label>}
-    {deleting && canDelete && <ProblemDeleteDialog problem={problem} onDeleted={onDeleted}
+    {deleting && mayDelete && <ProblemDeleteDialog problem={problem} onDeleted={onDeleted}
       onClose={() => { setDeleting(false); trigger.current?.focus(); }}/>}
   </div>;
 }
