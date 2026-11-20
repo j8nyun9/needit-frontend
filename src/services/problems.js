@@ -40,3 +40,24 @@ export async function createProblem(data){const row=await request('/problems',{m
 
 export async function getProblem(id,signal){const row=await request(`/problems/${encodeURIComponent(id)}`,{signal});if(row?.id==null)throw new Error('불편함 조회 응답이 올바르지 않아요.');return normalizeProblem(row);}
 export async function generateProblemPlan(id,signal){const row=await request(`/problems/${encodeURIComponent(id)}/plan`,{method:'POST',signal});if(!row?.ai_plan?.hackathonPlan||row.ai_status==='failed')throw new Error(row?.ai_error?.message||'AI 기획안 생성 결과를 확인하지 못했어요.');return normalizeProblem(row);}
+
+export async function listProblemComments(id, signal) {
+  const rows = await request('/problems/' + encodeURIComponent(id) + '/comments', { signal });
+  if (!Array.isArray(rows)) throw new Error('댓글 목록 응답 형식이 올바르지 않아요.');
+  return rows;
+}
+
+export async function createProblemComment(id, content, signal) {
+  const row = await request('/problems/' + encodeURIComponent(id) + '/comments', {
+    method: 'POST', signal, headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content: content.trim() }),
+  });
+  if (row?.id == null || typeof row.content !== 'string') throw new Error('서버의 댓글 등록 결과를 확인하지 못했어요.');
+  return row;
+}
+
+export function deleteProblemComment(id, commentId, signal) {
+  return request('/problems/' + encodeURIComponent(id) + '/comments/' + encodeURIComponent(commentId), {
+    method: 'DELETE', signal,
+  });
+}

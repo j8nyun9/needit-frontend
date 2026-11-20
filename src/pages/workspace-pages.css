@@ -77,3 +77,20 @@
 }
 .wp-project-summary > span { white-space: nowrap; }
 .wp-project-summary-separator { margin-inline-end: 8px; }
+
+.wp-comment-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.wp-comment-time { color: #a6b0be; font-size: 12px; white-space: nowrap; }
+.wp-comment-error { color: #ffada4; margin-top: 8px; }
+.wp-comment-error button { margin-inline-start: 8px; }
+.wp-comment-form button:disabled { opacity: .6; cursor: not-allowed; }
+.wp-issue-detail .wp-comment > div { flex: 1; min-width: 0; }
+.wp-comment-delete {
+  margin-inline-start: auto;
+  padding: 5px 9px;
+  border: 1px solid #87554f;
+  border-radius: 7px;
+  color: #ffada4;
+  font-size: 12px;
+}
+.wp-comment-delete:hover { background: #442e31; }
+.wp-comment-delete:disabled { opacity: .6; cursor: not-allowed; }

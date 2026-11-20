@@ -1,4 +1,4 @@
-import React, { useId, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../components/common/Icon.jsx';
 import './workspace-pages.css';
@@ -8,6 +8,7 @@ import {useAuth} from '../contexts/AuthContext.jsx';
 import AiPlanPanel,{AiPlanDialog} from '../components/AiPlanPanel.jsx';
 import {RelatedServices} from './ProjectReleasePages.jsx';
 import { problemCategories } from '../services/problemCategories.js';
+import { createProblemComment, deleteProblemComment, listProblemComments } from '../services/problems.js';
 
 const allCategories = '전체';
 export const extraIssues=[
@@ -117,11 +118,208 @@ const issueDateFormatter = new Intl.DateTimeFormat('ko-KR', {
   dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23', timeZone: 'Asia/Seoul',
 });
 
-function IssueCreatedTime({ value }) {
+function IssueTime({ value, className }) {
   if (typeof value !== 'string' || !value.trim()) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return <time className="wp-meta-time" dateTime={date.toISOString()}>{issueDateFormatter.format(date)}</time>;
+  return <time className={className} dateTime={date.toISOString()}>{issueDateFormatter.format(date)}</time>;
 }
 
-export function IssueDetailPage({problem,liked,onLike,onBack,onProject,onProblemUpdate,projects,onOpenProject,onDeleted,onCreateProject}){const {user,requireLogin}=useAuth();const[comments,setComments]=useState([{id:1,text:'저도 같은 불편함을 겪고 있어요. 함께 해결되면 좋겠어요!',author:'컴퓨터학부 학생'},{id:2,text:'필요한 정보를 한곳에서 볼 수 있으면 좋겠어요.',author:'경영학부 학생'}]);const[text,setText]=useState('');const[sort,setSort]=useState('latest');return <div className="wp-page"><Back onClick={onBack}>불편함 탐색으로 돌아가기</Back><div className="wp-detail-grid"><article className="wp-box wp-issue-detail"><span className="category">{problem.category}</span><h1>{problem.title}</h1><p className="wp-meta"><span className="wp-meta-author"><Icon name="user" size={23}/>익명 사용자 · 예시 게시글</span><IssueCreatedTime value={problem.created_at}/></p><RelatedServices problem={problem} projects={projects} onProject={onOpenProject}/><p className="wp-long-copy">{desc(problem)}</p>{problem.location&&<p className="wp-demo">관련 위치: {problem.location}</p>}<div className="wp-chips">{[problem.category,'학교생활','아이디어'].map(t=><span key={t}>#{t}</span>)}</div><div className="wp-detail-actions"><button className={liked?'wp-liked':''} onClick={onLike} aria-pressed={liked}><Icon name="heart"/>{problem.count}</button><span>댓글 {comments.length}</span>{problem.project_id!=null?<><span className="status developing wp-adopted">프로젝트 채택 완료</span><button className="button primary" type="button" onClick={()=>onOpenProject({id:problem.project_id})}>연결된 프로젝트 보기</button></>:<button className="button primary" onClick={onProject}><Icon name="code" size={20}/>개발 프로젝트 보기</button>}<IssueShare id={problem.id}/><ProblemDeleteButton problem={problem} onDeleted={onDeleted}/></div><div className="wp-comments-heading"><h2>댓글 {comments.length}</h2><select aria-label="댓글 정렬" value={sort} onChange={e=>setSort(e.target.value)}><option value="latest">최신순</option><option value="oldest">등록순</option></select></div>{[...comments].sort((a,b)=>sort==='latest'?b.id-a.id:a.id-b.id).map(c=><div className="wp-comment" key={c.id}><Icon name="user" size={28}/><div><strong>{c.author}</strong><p>{c.text}</p></div></div>)}<form className="wp-comment-form" onSubmit={e=>{e.preventDefault();if(!requireLogin()||!text.trim())return;setComments([...comments,{id:Date.now(),text:text.trim(),author:user?.name||'나'}]);setText('')}}><input required maxLength={500} aria-label="댓글" placeholder="댓글을 입력하세요..." value={text} onChange={e=>setText(e.target.value)}/><button type="submit" aria-label="댓글 등록"><Icon name="arrow"/></button></form><p className="wp-demo">댓글은 현재 화면에서만 유지돼요.</p></article><AiPlanPanel key={problem.id} problem={problem} onUpdate={onProblemUpdate} onCreateProject={onCreateProject}/></div></div>}
+export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onProblemUpdate, projects, onOpenProject, onDeleted, onCreateProject }) {
+  const { user, requireLogin } = useAuth();
+  const [comments, setComments] = useState([]);
+  const [commentsFor, setCommentsFor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [revision, setRevision] = useState(0);
+  const [text, setText] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [postError, setPostError] = useState('');
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [sort, setSort] = useState('latest');
+  const commentWriteRequest = useRef(null);
+  const deleteDialog = useRef(null);
+  const deleteHeading = useId();
+  const deleteDescription = useId();
+  const accountId = user?.id ?? null;
+  const draftKey = accountId === null ? null : 'needit-comment-draft:' + accountId + ':' + problem.id;
+
+  useEffect(() => {
+    setPosting(false);
+    setPostError('');
+    setDeleteTargetId(null);
+    setDeleting(false);
+    setDeleteError('');
+    try {
+      setText(draftKey ? sessionStorage.getItem(draftKey) || '' : '');
+    } catch {
+      setText('');
+    }
+    return () => {
+      commentWriteRequest.current?.abort();
+      commentWriteRequest.current = null;
+    };
+  }, [problem.id, draftKey]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setLoadError('');
+    listProblemComments(problem.id, controller.signal).then(rows => {
+      if (!controller.signal.aborted) {
+        setComments(rows);
+        setCommentsFor(accountId);
+      }
+    }).catch(error => {
+      if (!controller.signal.aborted) setLoadError(error.message);
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+    return () => controller.abort();
+  }, [problem.id, revision, accountId]);
+
+  async function submitComment(event) {
+    event.preventDefault();
+    if (loading || loadError || commentWriteRequest.current || !text.trim() || !requireLogin()) return;
+    const controller = new AbortController();
+    commentWriteRequest.current = controller;
+    setPosting(true);
+    setPostError('');
+    try {
+      const comment = await createProblemComment(problem.id, text, controller.signal);
+      if (controller.signal.aborted) return;
+      setComments(previous => [...previous.filter(row => row.id !== comment.id), comment]);
+      setText('');
+      try { if (draftKey) sessionStorage.removeItem(draftKey); } catch { /* The comment is already saved. */ }
+    } catch (error) {
+      if (error.status === 401 && draftKey) {
+        try { sessionStorage.setItem(draftKey, text); } catch { /* Storage is optional. */ }
+      }
+      if (!controller.signal.aborted) setPostError(error.message);
+    } finally {
+      if (commentWriteRequest.current === controller) commentWriteRequest.current = null;
+      if (!controller.signal.aborted) setPosting(false);
+    }
+  }
+
+  const deletable = accountId !== null && commentsFor === accountId && !loading && !loadError;
+  const deleteTarget = comments.find(comment => comment.id === deleteTargetId);
+  const dialogOpen = deletable && deleteTarget?.can_delete === true;
+
+  useEffect(() => {
+    const dialog = deleteDialog.current;
+    if (dialogOpen && !dialog?.open) dialog?.showModal();
+    if (!dialogOpen && dialog?.open) dialog.close();
+  }, [dialogOpen]);
+
+  async function confirmDelete() {
+    if (!dialogOpen || commentWriteRequest.current || !requireLogin()) return;
+    const controller = new AbortController();
+    commentWriteRequest.current = controller;
+    setDeleting(true);
+    setDeleteError('');
+
+    try {
+      await deleteProblemComment(problem.id, deleteTarget.id, controller.signal);
+      if (!controller.signal.aborted) {
+        setComments(previous => previous.filter(comment => comment.id !== deleteTarget.id));
+        setDeleteTargetId(null);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setDeleteError(error.status === 404
+          ? '댓글을 찾을 수 없거나 댓글 삭제 API가 아직 배포되지 않았어요.'
+          : error.message);
+      }
+    } finally {
+      if (commentWriteRequest.current === controller) commentWriteRequest.current = null;
+      if (!controller.signal.aborted) setDeleting(false);
+    }
+  }
+
+  const orderedComments = [...comments].sort((a, b) => {
+    const byDate = (Date.parse(a.created_at) || 0) - (Date.parse(b.created_at) || 0);
+    const order = byDate || String(a.id).localeCompare(String(b.id), undefined, { numeric: true });
+    return sort === 'latest' ? -order : order;
+  });
+  const commentHeading = loading || loadError ? '댓글' : '댓글 ' + comments.length;
+
+  return <div className="wp-page">
+    <Back onClick={onBack}>불편함 탐색으로 돌아가기</Back>
+    <div className="wp-detail-grid">
+      <article className="wp-box wp-issue-detail">
+        <span className="category">{problem.category}</span>
+        <h1>{problem.title}</h1>
+        <p className="wp-meta">
+          <span className="wp-meta-author"><Icon name="user" size={23}/>익명 사용자 · 예시 게시글</span>
+          <IssueTime value={problem.created_at} className="wp-meta-time"/>
+        </p>
+        <RelatedServices problem={problem} projects={projects} onProject={onOpenProject}/>
+        <p className="wp-long-copy">{desc(problem)}</p>
+        {problem.location && <p className="wp-demo">관련 위치: {problem.location}</p>}
+        <div className="wp-chips">{[problem.category, '학교생활', '아이디어'].map(tag => <span key={tag}>#{tag}</span>)}</div>
+        <div className="wp-detail-actions">
+          <button type="button" className={liked ? 'wp-liked' : ''} onClick={onLike}
+            aria-label={'공감 ' + problem.count + '개'} aria-pressed={liked}><Icon name="heart"/>{problem.count}</button>
+          <span>{commentHeading}</span>
+          {problem.project_id!=null?<><span className="status developing wp-adopted">프로젝트 채택 완료</span><button className="button primary" type="button" onClick={()=>onOpenProject({id:problem.project_id})}>연결된 프로젝트 보기</button></>:<button className="button primary" onClick={onProject}><Icon name="code" size={20}/>개발 프로젝트 보기</button>}
+          <IssueShare id={problem.id}/>
+          <ProblemDeleteButton problem={problem} onDeleted={onDeleted}/>
+        </div>
+        <div className="wp-comments-heading">
+          <h2>{commentHeading}</h2>
+          <select aria-label="댓글 정렬" value={sort} onChange={event => setSort(event.target.value)}>
+            <option value="latest">최신순</option><option value="oldest">등록순</option>
+          </select>
+        </div>
+        {loading && <p className="wp-demo" role="status">댓글을 불러오는 중이에요…</p>}
+        {loadError && <div className="wp-comment-error" role="alert">
+          댓글을 불러오지 못했어요. {loadError}
+          <button type="button" className="button outline" disabled={posting || deleting}
+            onClick={() => setRevision(previous => previous + 1)}>다시 시도</button>
+        </div>}
+        {!loading && !loadError && comments.length === 0 && <p className="wp-demo">아직 등록된 댓글이 없어요.</p>}
+        {orderedComments.map(comment => <div className="wp-comment" key={comment.id}>
+          <Icon name="user" size={28}/>
+          <div>
+            <div className="wp-comment-meta">
+              <strong>{comment.author_name || '익명 사용자'}</strong>
+              <IssueTime value={comment.created_at} className="wp-comment-time"/>
+              {deletable && comment.can_delete === true && (
+                <button className="wp-comment-delete" type="button" disabled={posting || deleting}
+                  onClick={() => { setDeleteError(''); setDeleteTargetId(comment.id); }}>댓글 삭제</button>
+              )}
+            </div>
+            <p>{comment.content}</p>
+          </div>
+        </div>)}
+        <dialog ref={deleteDialog} className="problem-delete-dialog" aria-labelledby={deleteHeading}
+          aria-describedby={deleteDescription}
+          onCancel={event => { if (deleting) event.preventDefault(); else setDeleteTargetId(null); }}
+          onClick={event => { if (event.target === event.currentTarget && !deleting) setDeleteTargetId(null); }}>
+          <div className="problem-delete-content">
+            <h2 id={deleteHeading}>이 댓글을 삭제할까요?</h2>
+            <p id={deleteDescription} className="problem-delete-title">{deleteTarget?.content}</p>
+            {deleteError && <p className="problem-delete-error" role="alert">{deleteError}</p>}
+            <div className="problem-delete-actions">
+              <button className="button outline" type="button" disabled={deleting}
+                onClick={() => setDeleteTargetId(null)}>취소</button>
+              <button className="button problem-delete-confirm" type="button" disabled={deleting}
+                onClick={confirmDelete}>{deleting ? '삭제 중…' : '삭제하기'}</button>
+            </div>
+          </div>
+        </dialog>
+        <form className="wp-comment-form" onSubmit={submitComment}>
+          <input required maxLength={500} aria-label="댓글" placeholder="댓글을 입력하세요..." value={text}
+            disabled={posting} onChange={event => { setText(event.target.value); setPostError(''); }}/>
+          <button type="submit" aria-label="댓글 등록" disabled={loading || Boolean(loadError) || posting || deleting || !text.trim()}><Icon name="arrow"/></button>
+        </form>
+        {posting && <p className="wp-demo" role="status">댓글을 등록하고 있어요…</p>}
+        {postError && <p className="wp-comment-error" role="alert">댓글을 등록하지 못했어요. {postError}</p>}
+      </article>
+      <AiPlanPanel key={problem.id} problem={problem} onUpdate={onProblemUpdate} onCreateProject={onCreateProject}/>
+    </div>
+  </div>;
+}
