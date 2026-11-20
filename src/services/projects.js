@@ -19,10 +19,7 @@ export const readNotification=id=>apiRequest(`/projects/${encodeURIComponent(id)
 
 export async function saveProjectProgress(id,data){
  const row=await apiRequest(`/projects/${encodeURIComponent(id)}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
- if(row?.id==null||Number(row.progress)!==data.progress||
-    (row.expected_completion_date??null)!==data.expected_completion_date||
-    (row.progress_started_on??null)!==data.progress_started_on){
-  throw new Error('서버 응답에서 진행률과 완료 예정일 저장을 확인하지 못했어요.');
- }
+ if(row?.id==null)throw new Error('저장 결과를 확인하지 못했어요.');
+
  return normalizeProject(row);
 }
