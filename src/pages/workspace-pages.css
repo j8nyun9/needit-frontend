@@ -49,10 +49,30 @@
   pointer-events: none;
 }
 
-.wp-detail-actions > .wp-share { margin-left: 0; }
-.wp-share-status { color: #a9c8ff; font-size: 13px; }
+.wp-issue-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wp-issue-more { position: relative; flex: none; }
+.wp-issue-more-trigger {
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  border: 1px solid #49535f; border-radius: 9px; color: #d8e2ee; font-size: 27px; line-height: 1;
+}
+.wp-issue-more-trigger:hover, .wp-issue-more-trigger[aria-expanded="true"] { background: #2b343e; }
+.wp-issue-menu, .wp-share-status:not(:empty), .wp-share-manual {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 6px); z-index: 2;
+  background: #272f38; border: 1px solid #49535f; border-radius: 10px;
+  box-shadow: 0 8px 20px #0005;
+}
+.wp-issue-menu { width: min(12rem, calc(100vw - 5rem)); overflow: hidden; }
+.wp-issue-menu button {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  width: 100%; min-height: 44px; padding: 9px 14px; text-align: left;
+}
+.wp-issue-menu button + button { border-top: 1px solid #424c58; }
+.wp-issue-menu button:hover, .wp-issue-menu button:focus-visible { background: #343f4c; }
+.wp-issue-menu button:focus-visible { outline-offset: -3px; }
+.wp-issue-menu .wp-issue-menu-danger { color: #ffada4; }
+.wp-share-status { width: max-content; max-width: calc(100vw - 5rem); padding: 8px 12px; color: #a9c8ff; font-size: 13px; }
 .wp-share-status:empty { display: none; }
-.wp-share-manual { flex-basis: 100%; overflow-wrap: anywhere; }
+.wp-share-manual { width: min(15rem, calc(100vw - 5rem)); padding: 10px; overflow-wrap: anywhere; }
 .wp-share-manual input {
   display: block;
   width: 100%;
@@ -64,8 +84,14 @@
   border-radius: 5px;
 }
 
-.wp-adopted { display: inline-flex; width: fit-content; margin-bottom: 8px; }
-.wp-detail-actions .wp-adopted { margin-bottom: 0; }
+.wp-project-count { display: inline-flex; width: fit-content; }
+.wp-project-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.wp-detail-actions > .wp-project-links {
+  justify-content: flex-end;
+  margin-inline-start: auto;
+  max-width: 100%;
+}
+.wp-project-links:empty { display: none; }
 
 .wp-issue-card > .wp-project-summary {
   flex-wrap: wrap;
@@ -77,3 +103,20 @@
 }
 .wp-project-summary > span { white-space: nowrap; }
 .wp-project-summary-separator { margin-inline-end: 8px; }
+
+.wp-comment-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.wp-comment-time { color: #a6b0be; font-size: 12px; white-space: nowrap; }
+.wp-comment-error { color: #ffada4; margin-top: 8px; }
+.wp-comment-error button { margin-inline-start: 8px; }
+.wp-comment-form button:disabled { opacity: .6; cursor: not-allowed; }
+.wp-issue-detail .wp-comment > div { flex: 1; min-width: 0; }
+.wp-comment-delete {
+  margin-inline-start: auto;
+  padding: 5px 9px;
+  border: 1px solid #87554f;
+  border-radius: 7px;
+  color: #ffada4;
+  font-size: 12px;
+}
+.wp-comment-delete:hover { background: #442e31; }
+.wp-comment-delete:disabled { opacity: .6; cursor: not-allowed; }

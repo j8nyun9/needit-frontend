@@ -10,12 +10,15 @@ const sentences = typeof Intl.Segmenter === 'function'
   ? new Intl.Segmenter('ko', { granularity: 'sentence' })
   : null;
 
-function getTitle(description) {
+function firstSentenceOf(description) {
   const text = description.trim();
   const firstLine = text.split(/\r?\n/u, 1)[0];
-  const firstSentence = sentences?.segment(text).containing(0)?.segment ??
-    firstLine.match(/^.+?[.!?。！？](?=\s|$)/u)?.[0] ?? firstLine;
-  return firstSentence.trim().replace(/(?<![.。])[.。]$/u, '')
+  return (sentences?.segment(text).containing(0)?.segment ??
+    firstLine.match(/^.+?[.!?。！？](?=\s|$)/u)?.[0] ?? firstLine).trim();
+}
+
+function getTitle(firstSentence) {
+  return firstSentence.replace(/(?<![.。])[.。]$/u, '')
     .slice(0, titleLimit).replace(/[\uD800-\uDBFF]$/u, '').trimEnd();
 }
 
@@ -37,8 +40,11 @@ function loadDraft() {
   }
 }
 
-export default function ReportPage({ onBack, onSubmit }) {
-  const [draft, setDraft] = useState(loadDraft);
+export default function ReportPage({ onBack, onSubmit, initialProblem }) {
+  const editing = Boolean(initialProblem);
+  const [draft, setDraft] = useState(() => editing
+    ? { description: initialProblem.description, category: initialProblem.category }
+    : loadDraft());
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -46,7 +52,10 @@ export default function ReportPage({ onBack, onSubmit }) {
   const id = useId();
 
   const { description, category } = draft;
-  const title = getTitle(description);
+  const firstSentence = firstSentenceOf(description);
+  const title = editing && firstSentence === firstSentenceOf(initialProblem.description)
+    ? initialProblem.title
+    : getTitle(firstSentence);
   const tooLong = description.length > bodyLimit;
   const canSubmit = Boolean(category && title && !tooLong);
 
@@ -75,10 +84,12 @@ export default function ReportPage({ onBack, onSubmit }) {
     setError('');
     try {
       await onSubmit({ title, description, category });
-      try { localStorage.removeItem(draftKey); } catch { /* The report was already saved. */ }
+      if (!editing) {
+        try { localStorage.removeItem(draftKey); } catch { /* The report was already saved. */ }
+      }
     } catch (error) {
-      if (error.status === 401) saveDraft();
-      setError(error.message || '제보 등록에 실패했어요. 다시 시도해주세요.');
+      if (!editing && error.status === 401) saveDraft();
+      setError(error.message || (editing ? '변경사항을 저장하지 못했어요.' : '제보 등록에 실패했어요. 다시 시도해주세요.'));
     } finally {
       submitting.current = false;
       setSaving(false);
@@ -87,8 +98,8 @@ export default function ReportPage({ onBack, onSubmit }) {
 
   return (
     <section className="wp-page report-page" aria-labelledby={id + '-heading'}>
-      <button type="button" className="wp-back" disabled={saving} onClick={onBack}>← 불편함 탐색으로 돌아가기</button>
-      <h1 id={id + '-heading'}>불편함 제보하기</h1>
+      <button type="button" className="wp-back" disabled={saving} onClick={onBack}>{editing ? '← 불편함 상세로 돌아가기' : '← 불편함 탐색으로 돌아가기'}</button>
+      <h1 id={id + '-heading'}>{editing ? '불편함 수정하기' : '불편함 제보하기'}</h1>
       <div className="report-page__layout">
         <aside className="report-intro" aria-labelledby={id + '-intro'}>
           <p className="code-comment">// 새로운 불편함 제보하기</p>
@@ -112,7 +123,7 @@ export default function ReportPage({ onBack, onSubmit }) {
         <div className="report-form__body">
           <label htmlFor={id + '-description'}>어떤 점이 불편했나요?</label>
           <p className="report-form__hint" id={id + '-hint'}>
-            첫 문장이 제목이 돼요. 자세한 상황이나 바라는 변화가 있다면 이어서 적어주세요.
+            {editing ? '첫 문장을 바꾸면 게시될 제목도 바뀌어요.' : '첫 문장이 제목이 돼요. 자세한 상황이나 바라는 변화가 있다면 이어서 적어주세요.'}
           </p>
           <textarea id={id + '-description'} name="description" rows={3} required maxLength={bodyLimit}
             value={description} disabled={saving} aria-invalid={tooLong}
@@ -124,7 +135,7 @@ export default function ReportPage({ onBack, onSubmit }) {
           </div>
           <p className={'report-form__length' + (tooLong ? ' report-form__error' : '')}
             id={id + '-body-length'} role="status">
-            {tooLong && '등록하려면 본문을 1,000자 이하로 줄여주세요. '}
+            {tooLong && '본문을 1,000자 이하로 줄여주세요. '}
             {description.length.toLocaleString('ko-KR')} / 1,000자
           </p>
         </div>
@@ -145,9 +156,9 @@ export default function ReportPage({ onBack, onSubmit }) {
         {message && <p className="report-form__hint" role="status">{message}</p>}
         {error && <p className="report-form__error" role="alert">{error}</p>}
         <div className="report-form__actions">
-          <button type="button" className="button outline" disabled={saving} onClick={saveDraft}>임시저장</button>
+          <button type="button" className="button outline" disabled={saving} onClick={editing ? onBack : saveDraft}>{editing ? '취소' : '임시저장'}</button>
           <button type="submit" className="button primary" disabled={!canSubmit || saving}>
-            {saving ? '등록 중…' : '제보 등록하기'}
+            {editing ? (saving ? '저장 중…' : '변경사항 저장') : (saving ? '등록 중…' : '제보 등록하기')}
           </button>
         </div>
       </form>
