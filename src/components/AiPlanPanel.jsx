@@ -4,12 +4,23 @@ import {useAuth} from '../contexts/AuthContext.jsx';
 import {getProblem,generateProblemPlan} from '../services/problems.js';
 import './ai-plan.css';
 const swLabels={direct:'SW로 직접 해결 가능',partial:'SW로 부분 해결 가능',difficult:'SW만으로 해결하기 어려움'};
-export default function AiPlanPanel({problem,onUpdate,onCreateProject,onOpenProject}){
+export default function AiPlanPanel({problem,onUpdate,onCreateProject,onOpenProject,detailLoaded=false}){
  const {user,requireLogin}=useAuth();
  const identity=useRef(user?.id);identity.current=user?.id;
  const [row,setRow]=useState(problem);const[reading,setReading]=useState(false);const[busy,setBusy]=useState(false);const[error,setError]=useState('');const[retryAt,setRetryAt]=useState(0);const[now,setNow]=useState(Date.now());const[refresh,setRefresh]=useState(0);const active=useRef(true);const request=useRef(null);const locked=useRef(false);const update=useRef(onUpdate);update.current=onUpdate;
  useEffect(()=>{active.current=true;return()=>{active.current=false;request.current?.abort();};},[]);
- useEffect(()=>{request.current?.abort();setRow({...problem,ai_plan:null,ai_plan_access:false});setError('');if(!user){setReading(false);return;}const controller=new AbortController();setReading(true);getProblem(problem.id,controller.signal).then(value=>{setRow(value);update.current?.(value);}).catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setReading(false);});return()=>controller.abort();},[problem.id,refresh,user?.id]);
+ useEffect(()=>{
+  if(detailLoaded&&refresh===0)return;
+  request.current?.abort();setRow({...problem,ai_plan:null,ai_plan_access:false});setError('');
+  if(!user){setReading(false);return;}
+  const controller=new AbortController();
+  setReading(true);
+  getProblem(problem.id,controller.signal).then(value=>{
+   if(!controller.signal.aborted){setRow(value);update.current?.(value);}
+  }).catch(e=>{if(!controller.signal.aborted)setError(e.message);})
+   .finally(()=>{if(!controller.signal.aborted)setReading(false);});
+  return()=>controller.abort();
+ },[problem.id,refresh,user?.id,detailLoaded]);
  useEffect(()=>{if(retryAt<=Date.now())return;const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[retryAt]);
  const seconds=Math.max(0,Math.ceil((retryAt-now)/1000));
  const plan=user&&row.ai_plan_access&&String(row.ai_plan_owner_id)===String(user.id)?row.ai_plan:null;const details=plan?.hackathonPlan;

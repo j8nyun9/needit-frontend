@@ -2,11 +2,10 @@ import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'reac
 import { createPortal } from 'react-dom';
 import Icon from '../components/common/Icon.jsx';
 import './workspace-pages.css';
-import IssueShare from '../components/common/IssueShare.jsx';
-import ProblemDeleteButton from '../components/common/ProblemDeleteButton.jsx';
+import IssueActionsMenu from '../components/common/IssueActionsMenu.jsx';
 import {useAuth} from '../contexts/AuthContext.jsx';
 import AiPlanPanel,{AiPlanDialog} from '../components/AiPlanPanel.jsx';
-import {RelatedServices} from './ProjectReleasePages.jsx';
+import {ProblemProjectLinks, RelatedServices} from './ProjectReleasePages.jsx';
 import { problemCategories } from '../services/problemCategories.js';
 import { createProblemComment, deleteProblemComment, listProblemComments } from '../services/problems.js';
 
@@ -125,7 +124,7 @@ function IssueTime({ value, className }) {
   return <time className={className} dateTime={date.toISOString()}>{issueDateFormatter.format(date)}</time>;
 }
 
-export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onProblemUpdate, projects, onOpenProject, onDeleted, onCreateProject }) {
+export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onProblemUpdate, projects, onOpenProject, onDeleted, onCreateProject, onEdit }) {
   const { user, requireLogin } = useAuth();
   const [comments, setComments] = useState([]);
   const [commentsFor, setCommentsFor] = useState(null);
@@ -250,7 +249,10 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
     <Back onClick={onBack}>불편함 탐색으로 돌아가기</Back>
     <div className="wp-detail-grid">
       <article className="wp-box wp-issue-detail">
-        <span className="category">{problem.category}</span>
+        <div className="wp-issue-top">
+          <span className="category">{problem.category}</span>
+          <IssueActionsMenu problem={problem} onEdit={onEdit} canDelete={Boolean(user) && problem.can_delete === true} onDeleted={onDeleted}/>
+        </div>
         <h1>{problem.title}</h1>
         <p className="wp-meta">
           <span className="wp-meta-author"><Icon name="user" size={23}/>익명 사용자 · 예시 게시글</span>
@@ -264,9 +266,7 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
           <button type="button" className={liked ? 'wp-liked' : ''} onClick={onLike}
             aria-label={'공감 ' + problem.count + '개'} aria-pressed={liked}><Icon name="heart"/>{problem.count}</button>
           <span>{commentHeading}</span>
-          {problem.project_id!=null?<><span className="status developing wp-adopted">프로젝트 채택 완료</span><button className="button primary" type="button" onClick={()=>onOpenProject({id:problem.project_id})}>연결된 프로젝트 보기</button></>:<button className="button primary" onClick={onProject}><Icon name="code" size={20}/>개발 프로젝트 보기</button>}
-          <IssueShare id={problem.id}/>
-          <ProblemDeleteButton problem={problem} onDeleted={onDeleted}/>
+          <ProblemProjectLinks problem={problem} projects={projects} onOpenProject={onOpenProject} onOpenProjectList={onProject}/>
         </div>
         <div className="wp-comments-heading">
           <h2>{commentHeading}</h2>
@@ -319,7 +319,7 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
         {posting && <p className="wp-demo" role="status">댓글을 등록하고 있어요…</p>}
         {postError && <p className="wp-comment-error" role="alert">댓글을 등록하지 못했어요. {postError}</p>}
       </article>
-      <AiPlanPanel key={problem.id} problem={problem} onUpdate={onProblemUpdate} onCreateProject={onCreateProject}/>
+      <AiPlanPanel key={problem.id} problem={problem} detailLoaded onUpdate={onProblemUpdate} onCreateProject={onCreateProject}/>
     </div>
   </div>;
 }

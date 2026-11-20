@@ -17,6 +17,26 @@ export function RelatedServices({problem,projects=[],onProject}){
  if(!related.length)return null;
  return <section className="release-related" aria-label="이 불편함을 해결한 서비스"><h2>이 불편함을 해결한 서비스가 출시됐어요</h2>{related.map(p=><div key={p.id}><button className="release-text-link" onClick={()=>onProject(p)}>{p.title} →</button><ServiceLink project={p}/></div>)}</section>;
 }
+function ProblemProjectCount({problem}) {
+ const count=problem.project_count;
+ if(!Number.isInteger(count)||count<0)return null;
+ return <span className="status developing wp-project-count">연결된 프로젝트 {count}개</span>;
+}
+
+export function ProblemProjectLinks({problem,projects=[],onOpenProject,onOpenProjectList}) {
+ const hasProjectIds=Array.isArray(problem.project_ids);
+ const ids=hasProjectIds?problem.project_ids:problem.project_id==null?[]:[problem.project_id];
+ return <div className="wp-project-links">
+  <ProblemProjectCount problem={problem}/>
+  {ids.map(id=>{
+   const project=projects.find(item=>String(item.id)===String(id));
+   const label=hasProjectIds?(project?.title||`프로젝트 #${id} 보기`):'연결된 프로젝트 보기';
+   return <button key={id} className="button primary" type="button" onClick={()=>onOpenProject({id})}>{label}</button>;
+  })}
+  {!ids.length&&onOpenProjectList&&<button className="button primary" type="button" onClick={onOpenProjectList}><Icon name="code" size={20}/>개발 프로젝트 보기</button>}
+ </div>;
+}
+
 export function ProjectsPage({projects,onOpen,onCreated}){
  const [status,setStatus]=useState('전체');const [registering,setRegistering]=useState(false);const {requireLogin}=useAuth();
  if(registering)return <div className="wp-page"><ServiceRegistration onCancel={()=>setRegistering(false)} onCreated={project=>{setRegistering(false);onCreated(project);}}/></div>;
