@@ -4,7 +4,7 @@ import Icon from '../components/common/Icon.jsx';
 import './workspace-pages.css';
 import IssueActionsMenu from '../components/common/IssueActionsMenu.jsx';
 import {useAuth} from '../contexts/AuthContext.jsx';
-import AiPlanPanel,{AiPlanDialog} from '../components/AiPlanPanel.jsx';
+import AiPlanPanel from '../components/AiPlanPanel.jsx';
 import {ProblemProjectLinks, RelatedServices} from './ProjectReleasePages.jsx';
 import { problemCategories } from '../services/problemCategories.js';
 import { createProblemComment, deleteProblemComment, listProblemComments } from '../services/problems.js';
@@ -80,16 +80,13 @@ function IssueProjectSummary({ problem }) {
   const hasDeployed = Number.isInteger(deployed) && deployed >= 0;
   if (!hasConnected && !hasDeployed) return null;
 
-  return <div className="wp-project-summary">
-    {hasConnected && <span>연결된 프로젝트 {connected}개</span>}
-    {hasDeployed && <span>
-      {hasConnected && <span className="wp-project-summary-separator" aria-hidden="true">·</span>}
-      배포된 프로젝트 {deployed}개
-    </span>}
+  return <div className="wp-project-summary" aria-label="프로젝트 연결·배포 현황">
+    {hasConnected && <span className={'wp-project-metric connected'+(connected===0?' is-empty':'')}><span>연결된 프로젝트</span><strong>{connected}<small>개</small></strong></span>}
+    {hasDeployed && <span className={'wp-project-metric deployed'+(deployed===0?' is-empty':'')}><span>배포된 프로젝트</span><strong>{deployed}<small>개</small></strong></span>}
   </div>;
 }
 
-export function ExplorePage({problems,liked,onLike,onOpen,onReport,onProblemUpdate,onCreateProject,onOpenProject,query=''}){const[planProblem,setPlanProblem]=useState(null);const[search,setSearch]=useState('');const[category,setCategory]=useState(allCategories);const[sort,setSort]=useState('latest');const items=problems.filter(p=>(category===allCategories||p.category===category)&&(p.title+desc(p)).includes(search||query)).sort((a,b)=>sort==='popular'?b.count-a.count:(new Date(b.created_at||0)-new Date(a.created_at||0)));return <div className="wp-page"><section className="wp-explore-hero"><div><p className="code-comment">// NEEDIT<br/>// 대학생활 속 불편함을 함께 찾아 해결해요</p><h1>불편함 <span>탐색</span></h1><p>학교생활, 학사행정, 시설 등에서 겪는 다양한 불편함을 둘러보고,<br/>공감하는 문제에 의견을 남기거나, 해결해볼 아이디어를 떠올려보세요.</p></div><div className="wp-code"><div>🔴 🟡 🟢 <span>needit.ts</span></div><code><i>1</i> <b>const</b> explore = <em>"학생들의 불편함을 발견하고,"</em><br/><i>2</i> <b>const</b> solve = <em>"함께 해결해나가는 과정"</em>;<br/><i>3</i> <span>// Explore Inconveniences</span></code></div></section><div className="wp-filters"><label><Icon name="search" size={20}/><input aria-label="불편함 검색" placeholder="제목, 내용, 키워드로 검색해보세요" value={search} onChange={e=>setSearch(e.target.value)}/></label><div className="wp-chips">
+export function ExplorePage({problems,liked,onLike,onOpen,onReport,query=''}){const[search,setSearch]=useState('');const[category,setCategory]=useState(allCategories);const[sort,setSort]=useState('latest');const items=problems.filter(p=>(category===allCategories||p.category===category)&&(p.title+desc(p)).includes(search||query)).sort((a,b)=>sort==='popular'?b.count-a.count:(new Date(b.created_at||0)-new Date(a.created_at||0)));return <div className="wp-page"><section className="wp-explore-hero"><div><p className="code-comment">// NEEDIT<br/>// 대학생활 속 불편함을 함께 찾아 해결해요</p><h1>불편함 <span>탐색</span></h1><p>학교생활, 학사행정, 시설 등에서 겪는 다양한 불편함을 둘러보고,<br/>공감하는 문제에 의견을 남기거나, 해결해볼 아이디어를 떠올려보세요.</p></div><div className="wp-code"><div>🔴 🟡 🟢 <span>needit.ts</span></div><code><i>1</i> <b>const</b> explore = <em>"학생들의 불편함을 발견하고,"</em><br/><i>2</i> <b>const</b> solve = <em>"함께 해결해나가는 과정"</em>;<br/><i>3</i> <span>// Explore Inconveniences</span></code></div></section><div className="wp-filters"><label><Icon name="search" size={20}/><input aria-label="불편함 검색" placeholder="제목, 내용, 키워드로 검색해보세요" value={search} onChange={e=>setSearch(e.target.value)}/></label><div className="wp-chips">
         <button type="button" className={category === allCategories ? 'selected' : ''} aria-pressed={category === allCategories} onClick={() => setCategory(allCategories)}>{allCategories}</button>
         {problemCategories.map(({ name, example }) => (
           <CategoryFilterButton key={name} name={name} example={example} selected={category === name} onSelect={() => setCategory(name)} />
@@ -105,16 +102,14 @@ export function ExplorePage({problems,liked,onLike,onOpen,onReport,onProblemUpda
     <span className="category">{p.category}</span>
   </div>
   <p>{desc(p)}</p>
-  <footer>
-    <button className="wp-ai-trigger" onClick={()=>setPlanProblem(p)}><Icon name="sparkles" size={17}/>{p.ai_plan?'AI 기획안 보기':'AI 기획안 만들기'}</button>
-    <button className={liked.includes(p.id)?'wp-liked':''} onClick={()=>onLike(p.id)} aria-pressed={liked.includes(p.id)}><Icon name="heart" size={20}/>{p.count}</button>
-    <button onClick={()=>onOpen(p)}>댓글 보기</button>
-    <button className="wp-card-arrow" aria-label={`${p.title} 상세 보기`} onClick={()=>onOpen(p)}><Icon name="arrow" size={19}/></button>
-  </footer>
-  <IssueProjectSummary problem={p}/>
-  </article>;})}</div>{planProblem&&<AiPlanDialog problem={planProblem} onClose={()=>setPlanProblem(null)} onUpdate={onProblemUpdate} onCreateProject={onCreateProject} onOpenProject={onOpenProject}/>}{!items.length&&<p className="empty">조건에 맞는 불편함이 없어요.</p>}</div>}
+
+  <div className="wp-card-bottom">
+    <button type="button" className={'wp-card-heart'+(liked.includes(p.id)?' wp-liked':'')} onClick={()=>onLike(p.id)} aria-pressed={liked.includes(p.id)} aria-label={p.title+' 공감'}><Icon name="heart" size={20}/>{p.count}</button>
+    <IssueProjectSummary problem={p}/>
+  </div>
+  </article>;})}</div>{!items.length&&<p className="empty">조건에 맞는 불편함이 없어요.</p>}</div>}
 const issueDateFormatter = new Intl.DateTimeFormat('ko-KR', {
-  dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23', timeZone: 'Asia/Seoul',
+  year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Seoul',
 });
 
 function IssueTime({ value, className }) {
@@ -137,7 +132,7 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  const [sort, setSort] = useState('latest');
+
   const commentWriteRequest = useRef(null);
   const deleteDialog = useRef(null);
   const deleteHeading = useId();
@@ -241,7 +236,7 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
   const orderedComments = [...comments].sort((a, b) => {
     const byDate = (Date.parse(a.created_at) || 0) - (Date.parse(b.created_at) || 0);
     const order = byDate || String(a.id).localeCompare(String(b.id), undefined, { numeric: true });
-    return sort === 'latest' ? -order : order;
+    return -order;
   });
   const commentHeading = loading || loadError ? '댓글' : '댓글 ' + comments.length;
 
@@ -254,11 +249,12 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
           <IssueActionsMenu problem={problem} onEdit={onEdit} canDelete={Boolean(user) && problem.can_delete === true} onDeleted={onDeleted}/>
         </div>
         <h1>{problem.title}</h1>
+        <RelatedServices problem={problem} projects={projects} onProject={onOpenProject}/>
         <p className="wp-meta">
-          <span className="wp-meta-author"><Icon name="user" size={23}/>익명 사용자 · 예시 게시글</span>
+          
           <IssueTime value={problem.created_at} className="wp-meta-time"/>
         </p>
-        <RelatedServices problem={problem} projects={projects} onProject={onOpenProject}/>
+
         <p className="wp-long-copy">{desc(problem)}</p>
         {problem.location && <p className="wp-demo">관련 위치: {problem.location}</p>}
         <div className="wp-chips">{[problem.category, '학교생활', '아이디어'].map(tag => <span key={tag}>#{tag}</span>)}</div>
@@ -270,9 +266,7 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
         </div>
         <div className="wp-comments-heading">
           <h2>{commentHeading}</h2>
-          <select aria-label="댓글 정렬" value={sort} onChange={event => setSort(event.target.value)}>
-            <option value="latest">최신순</option><option value="oldest">등록순</option>
-          </select>
+
         </div>
         {loading && <p className="wp-demo" role="status">댓글을 불러오는 중이에요…</p>}
         {loadError && <div className="wp-comment-error" role="alert">
@@ -319,7 +313,7 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
         {posting && <p className="wp-demo" role="status">댓글을 등록하고 있어요…</p>}
         {postError && <p className="wp-comment-error" role="alert">댓글을 등록하지 못했어요. {postError}</p>}
       </article>
-      <AiPlanPanel key={problem.id} problem={problem} detailLoaded onUpdate={onProblemUpdate} onCreateProject={onCreateProject}/>
+      <AiPlanPanel key={problem.id} problem={problem} detailLoaded onUpdate={onProblemUpdate} onCreateProject={onCreateProject} onOpenProject={onOpenProject}/>
     </div>
   </div>;
 }

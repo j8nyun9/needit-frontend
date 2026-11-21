@@ -55,7 +55,7 @@ export default function App(){
  const [projectReload,setProjectReload]=useState(0);
  useEffect(()=>{const c=new AbortController();setProjects([]);setProjectError('');listProjects(c.signal).then(setProjects).catch(e=>{if(!c.signal.aborted)setProjectError(e.message);});return()=>c.abort();},[user?.id,projectReload]);
  function updateProject(row){setProjects(prev=>prev.map(p=>String(p.id)===String(row.id)?{...p,...row}:p));}
- function openProject(row){setPageState({type:'project',data:row,back:selectedPage});}
+ function openProject(row){setPageState(previous=>({type:'project',data:row,back:previous}));}
  function openProjectDraft(problem) {
   if(!requireLogin()||!problem.ai_plan_access||String(problem.ai_plan_owner_id)!==String(user.id)||
    !problem.ai_plan||problem.project_id!=null)return;

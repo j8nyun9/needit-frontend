@@ -19,7 +19,7 @@ export function ServiceLink({project}){
 export function RelatedServices({problem,projects=[],onProject}){
  const related=projects.filter(p=>p.status==='서비스 운영 중'&&p.problem_ids?.some(id=>String(id)===String(problem.id)));
  if(!related.length)return null;
- return <section className="release-related" aria-label="이 불편함을 해결한 서비스"><h2>이 불편함을 해결한 서비스가 출시됐어요</h2>{related.map(p=><div key={p.id}><button className="release-text-link" onClick={()=>onProject(p)}>{p.title} →</button><ServiceLink project={p}/></div>)}</section>;
+ return <section className="release-related" aria-label="이 불편함을 해결한 서비스"><h2>이 불편함을 해결한 서비스가 출시됐어요</h2><div className="release-related-links">{related.map(p=><ServiceLink key={p.id} project={p}/>)}</div></section>;
 }
 function ProblemProjectCount({problem}) {
  const count=problem.project_count;
@@ -34,6 +34,7 @@ export function ProblemProjectLinks({problem,projects=[],onOpenProject,onOpenPro
   <ProblemProjectCount problem={problem}/>
   {ids.map(id=>{
    const project=projects.find(item=>String(item.id)===String(id));
+   if(project?.title?.trim()==='공지 모아보기')return null;
    const label=hasProjectIds?(project?.title||`프로젝트 #${id} 보기`):'연결된 프로젝트 보기';
    return <button key={id} className="button primary" type="button" onClick={()=>onOpenProject({id})}>{label}</button>;
   })}
