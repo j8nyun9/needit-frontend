@@ -6,8 +6,8 @@ import {mergeSavedLikes} from './services/problemLikeState.js';
 import ReportPage from './features/problems/components/ReportPage.jsx';
 import MyPage from './pages/MyPage.jsx';
 import {ProjectsPage,ProjectCreatePage,ProjectDetailPage,ProjectNotifications,ServiceLink} from './pages/ProjectReleasePages.jsx';
-import {listProjects} from './services/projects.js';
-import {projectDate, projectDisplayStatus} from './utils/projectPresentation.js';
+import {listProjects,releaseStatuses} from './services/projects.js';
+import {projectDate, projectDisplayStatus, projectStatusClass} from './utils/projectPresentation.js';
 import LoginPage from './pages/LoginPage.jsx';
 import {currentUser,logout} from './services/auth.js';
 import ReadmePage from './pages/ReadmePage.jsx';
@@ -134,10 +134,16 @@ export default function App(){
  useEffect(()=>{ if(dialog) dialogRef.current?.showModal(); else dialogRef.current?.close(); },[dialog]);
  useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),3500);return()=>clearTimeout(timer);},[notice]);
  const filteredProblems=problems.filter(p=>(p.title+p.category).includes(query));
+ const homeProblems=tab===footerPages[0]&&!query
+  ? [...filteredProblems].sort((a,b)=>Number(b.count||0)-Number(a.count||0)||(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0))
+  : filteredProblems;
  const filteredProjects=projects.filter(p=>(p.title+p.description).includes(query)).map(project=>{
   
   return {project,status:projectDisplayStatus(project)};
  });
+ const homeProjects=tab===footerPages[0]&&!query
+  ? [...filteredProjects].sort((a,b)=>releaseStatuses.indexOf(b.status)-releaseStatuses.indexOf(a.status)||(Date.parse(b.project.created_at)||0)-(Date.parse(a.project.created_at)||0)).slice(0,3)
+  : filteredProjects;
  const liking=useRef(new Set());
  async function toggleLike(id,currentLiked=liked.includes(id)){
   if(!requireLogin())return;
@@ -212,9 +218,9 @@ export default function App(){
     <div className="editor" aria-label="불편함을 서비스로 만드는 코드 예시"><div className="editor-top"><i/><i/><i/></div><div className="editor-tabs"><span><Icon name="code" size={18}/>needit.<b>ts</b></span></div><div className="code-lines"><div><em>1</em><code><span className="blue">const</span> <span className="purple">issue</span> = <span className="yellow">"학교생활 속 불편함"</span>;</code></div><div><em>2</em><code><span className="blue">const</span> <span className="purple">solution</span> = develop(issue);</code></div><div><em>3</em><code> </code></div><div><em>4</em><code className="green">// From Issue to Service</code></div></div></div></section>
    </>}
    {(tab!=='홈'||query)&&<div className="page-heading"><div><p className="code-comment">// {query?'SEARCH':tab==='프로젝트'?'PROJECTS':'DISCOVER'}</p><h1>{query?'검색 결과':tab}</h1><p>{query?`“${query}”에 대한 불편함과 프로젝트를 찾아보세요.`:tab==='프로젝트'?'학생들의 불편함이 실제 서비스로 만들어지고 있어요.':'당신도 같은 불편함을 겪었다면 공감해주세요.'}</p></div><button className="button primary" onClick={()=>setPage({type:'report'})}><Icon name="pencil"/>불편함 제보하기</button></div>}
-   <div className={`dashboard ${tab!=='홈'&&!query?'single':''}`}>
-    {(tab!=='프로젝트'||query)&&<section className="panel"><div className="panel-header"><h2><span className="fire" aria-hidden="true">🔥</span>{tab==='홈'&&!query?'인기 불편함':'불편함 목록'}</h2>{tab==='홈'&&!query&&<button onClick={()=>setTab('불편함 탐색')}>전체보기 <Icon name="arrow" size={18}/></button>}<span className="sr-only">총 {filteredProblems.length}건</span></div><div className="problem-list">{filteredProblems.slice(0,5).map(p=><article className="problem-row" key={p.id}><span className="issue-id">#{p.id}</span><button className="problem-title" onClick={()=>setPage({type:'problem',data:p})}>{p.title}</button><span className="category">{p.category}</span><button className={`like ${liked.includes(p.id)?'liked':''}`} aria-label={`${p.title} 공감 ${p.count}개`} aria-pressed={liked.includes(p.id)} onClick={()=>toggleLike(p.id)}><Icon name="heart" size={20}/><span>{p.count}</span></button></article>)}{!filteredProblems.length&&<p className="empty">검색한 불편함이 없어요. 첫 번째로 제보해보세요.</p>}</div></section>}
-    {(tab!=='불편함 탐색'||query)&&<section className="panel"><div className="panel-header"><h2><Icon name="code" size={29}/>진행 중인 프로젝트</h2>{tab==='홈'&&!query&&<button onClick={()=>setTab('프로젝트')}>전체보기 <Icon name="arrow" size={18}/></button>}</div><div className="project-list">{filteredProjects.map(({project:p,status})=><article className="project-row" key={p.id}><Icon className="folder" name="folder" size={38}/><div className="project-content"><div className="project-title-row"><button className="project-title" onClick={()=>setPage({type:'project',data:p})}>{p.title}</button><span className={`status ${status==='기획 중'?'planning':'developing'}`}>{status}</span></div><p>{p.description}</p><ServiceLink project={p}/><p className="muted">개발 완료 예정일: {p.expected_completion_date||'미정'}</p></div></article>)}{!filteredProjects.length&&<p className="empty">검색한 프로젝트가 없어요.</p>}</div></section>}
+   <div className={`dashboard ${tab===footerPages[0]&&!query?'home-dashboard':''} ${tab!=='홈'&&!query?'single':''}`}>
+    {(tab!=='프로젝트'||query)&&<section className="panel"><div className="panel-header"><h2><span className="fire" aria-hidden="true">🔥</span>{tab==='홈'&&!query?'인기 불편함':'불편함 목록'}</h2>{tab==='홈'&&!query&&<button onClick={()=>setTab('불편함 탐색')}>전체보기 <Icon name="arrow" size={18}/></button>}<span className="sr-only">총 {filteredProblems.length}건</span></div><div className="problem-list">{homeProblems.slice(0,5).map(p=><article className="problem-row" key={p.id}><span className="issue-id">#{p.id}</span><button className="problem-title" onClick={()=>setPage({type:'problem',data:p})}>{p.title}</button><span className="category">{p.category}</span>{tab===footerPages[0]?<span className={`like ${liked.includes(p.id)?'liked':''}`} aria-label={p.title+' 공감 '+p.count+'개'}><Icon name="heart" size={20}/><span>{p.count}</span></span>:<button className={`like ${liked.includes(p.id)?'liked':''}`} aria-label={`${p.title} 공감 ${p.count}개`} aria-pressed={liked.includes(p.id)} onClick={()=>toggleLike(p.id)}><Icon name="heart" size={20}/><span>{p.count}</span></button>}</article>)}{!filteredProblems.length&&<p className="empty">검색한 불편함이 없어요. 첫 번째로 제보해보세요.</p>}</div></section>}
+    {(tab!=='불편함 탐색'||query)&&<section className="panel"><div className="panel-header"><h2><Icon name="code" size={29}/>진행 중인 프로젝트</h2>{tab==='홈'&&!query&&<button onClick={()=>setTab('프로젝트')}>전체보기 <Icon name="arrow" size={18}/></button>}</div><div className="project-list">{homeProjects.map(({project:p,status})=><article className="project-row" key={p.id}><Icon className="folder" name="folder" size={38}/><div className="project-content"><div className="project-title-row"><button className="project-title" onClick={()=>setPage({type:'project',data:p})}>{p.title}</button><div className="home-project-status-actions"><span className={'status '+projectStatusClass(status)}>{status}</span></div></div><p>{p.description}</p><p className="muted">개발 완료 예정일: {p.expected_completion_date||'미정'}</p>{tab!==footerPages[0]&&<div className="home-project-launch"><ServiceLink project={p}/></div>}</div></article>)}{!homeProjects.length&&<p className="empty">검색한 프로젝트가 없어요.</p>}</div></section>}
    </div>
    </>}
    </>}

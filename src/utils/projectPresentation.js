@@ -18,3 +18,7 @@ export function isLinkedProject(project, problem) {
     || (Array.isArray(project.problem_ids) && project.problem_ids.some(id => String(id) === String(problem.id)))
     || (project.related_problem_id != null && String(project.related_problem_id) === String(problem.id));
 }
+
+export function projectStatusClass(status) {
+ return status==='서비스 운영 중'?'release-live':status==='기획 중'?'planning':'developing';
+}

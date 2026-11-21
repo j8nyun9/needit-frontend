@@ -24,3 +24,20 @@
 .release-related { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 .release-related h2 { margin:0; flex:1 1 240px; }
 .release-related > .release-related-links { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin:0 0 0 auto; }
+
+.release-card-status-actions { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.release-card-status-actions > a.button.primary { min-height:0; padding:7px 11px; font-size:12px; line-height:1.4; white-space:nowrap; }
+.release-card-title-link { padding:0; text-align:left; color:inherit; font:inherit; cursor:pointer; }
+.release-card-title-link:hover { color:#91c6ff; text-decoration:underline; text-underline-offset:4px; }
+.release-card-title-link:focus-visible { outline:2px solid #82b8ff; outline-offset:4px; border-radius:3px; }
+
+.release-card-heading { display:flex; align-items:center; gap:10px; min-width:0; color:var(--text,#edf0f5); }
+.release-card-heading > svg { flex-shrink:0; color:var(--blue); }
+.release-card-heading h3 { margin:0; }
+.release-card-status-actions { flex-shrink:0; }
+.release-card-bottom { margin-top:auto; }
+.release-card-launch { display:flex; justify-content:flex-end; padding-bottom:10px; }
+.release-card-launch:empty { display:none; }
+.release-card-launch > .button { min-height:0; padding:7px 11px; font-size:12px; line-height:1.4; }
+
+.release-content-label { display:block; margin-bottom:4px; font-size:12px; font-weight:600; color:#d0dceb; }

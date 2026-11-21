@@ -1,3 +1,4 @@
+import useMyFilter from '../hooks/useMyFilter.js';
 import FeedbackActions from '../components/FeedbackActions.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import Icon from '../components/common/Icon.jsx';
@@ -9,7 +10,7 @@ import ServiceRegistration from '../components/ServiceRegistration.jsx';
 import ServiceLaunchCard from '../components/ServiceLaunchCard.jsx';
 import ProjectProgressEditor from '../components/ProjectProgressEditor.jsx';
 import ProjectFeedbackReaction from '../components/ProjectFeedbackReaction.jsx';
-import {isLinkedProject, projectDate, projectDisplayStatus} from '../utils/projectPresentation.js';
+import {isLinkedProject, projectDate, projectDisplayStatus, projectStatusClass} from '../utils/projectPresentation.js';
 import ServiceUnpublishButton from '../components/ServiceUnpublishButton.jsx';
 
 export function ServiceLink({project}){
@@ -45,13 +46,14 @@ export function ProblemProjectLinks({problem,projects=[],onOpenProject,onOpenPro
 export function ProjectsPage({projects,problems,onOpen,onCreated,projectToday}){
  const [status,setStatus]=useState('전체');
  const [registering,setRegistering]=useState(false);
- const {requireLogin}=useAuth();
+ const {user,requireLogin}=useAuth();
+ const [onlyMine,setOnlyMine]=useMyFilter(user?.id,'projects');
  if(registering)return <div className="wp-page"><ServiceRegistration onCancel={()=>setRegistering(false)} onCreated={project=>{setRegistering(false);onCreated(project);}}/></div>;
  const cards=projects.map(project=>{
   
   return {project,status:projectDisplayStatus(project)};
  });
- const rows=cards.filter(card=>status==='전체'||card.status===status);
+ const rows=cards.filter(card=>(!onlyMine||(Boolean(user)&&card.project.can_edit===true))&&(status==='전체'||card.status===status));
  const filters=['전체',...releaseStatuses];
  return <div className="wp-page release-directory">
   <p className="code-comment">// FROM ISSUE TO SERVICE</p>
@@ -59,6 +61,7 @@ export function ProjectsPage({projects,problems,onOpen,onCreated,projectToday}){
   <p className="release-directory-note">학생들의 불편함에서 시작된 서비스를 만나보세요.</p>
   <div className="release-actions"><button className="button primary" onClick={()=>{if(requireLogin())setRegistering(true);}}>＋ 완성한 서비스 등록</button></div>
   <div className="release-filters" role="group" aria-label="프로젝트 상태 필터">
+   <button type="button" className={'my-filter-toggle'+(onlyMine?' is-on':'')} aria-pressed={onlyMine} onClick={()=>{if(onlyMine)setOnlyMine(false);else if(requireLogin())setOnlyMine(true);}}><span>My</span><span className="my-filter-switch" aria-hidden="true"/></button>
    {filters.map(option=><button type="button" key={option} className={'button '+(option===status?'primary':'outline')}
     aria-pressed={option===status} onClick={()=>setStatus(option)}>{option}</button>)}
   </div>
@@ -69,16 +72,16 @@ export function ProjectsPage({projects,problems,onOpen,onCreated,projectToday}){
     const issue=problems.find(problem=>isLinkedProject(project,problem));
     return <article className="wp-box release-directory-card" key={project.id}>
      <div className="wp-box-body">
-      <div className="release-card-meta"><Icon name="folder" size={22}/><span className={'status '+(label==='서비스 운영 중'?'release-live':label==='기획 중'||label==='배포 대기'?'planning':'developing')}>{label}</span></div>
-      <h3>{project.title}</h3>
-      {issue&&<p className="wp-demo">관련 제보 · {issue.title}</p>}
-      <p className="release-directory-note">{project.description}</p>
-      <div className="release-card-footer">
+      <div className="release-card-meta"><div className="release-card-heading"><Icon name="folder" size={22}/><h3><button type="button" className="release-card-title-link" onClick={()=>onOpen(project)}>{project.title}</button></h3></div><div className="release-card-status-actions"><span className={'status '+projectStatusClass(label)}>{label}</span></div></div>
+      
+      {issue&&<p className="wp-demo"><strong className="release-content-label">시작 문제</strong>{issue.title}</p>}
+      <p className="release-directory-note"><strong className="release-content-label">프로젝트 설명</strong>{project.description}</p>
+      <div className="release-card-bottom"><div className="release-card-footer">
        <p className="wp-demo">개발 완료 예정일: {project.expected_completion_date||'미정'}</p>
-       <div className="release-actions"><button className="button outline" onClick={()=>onOpen(project)} aria-label={project.title+' 프로젝트 살펴보기'}>프로젝트 살펴보기 <Icon name="arrow" size={17}/></button><ServiceLink project={project}/></div>
+
       </div>
      </div>
-    </article>;
+    </div></article>;
    })}
   </div>
   {!rows.length&&<p className="empty">{status==='전체'?'아직 표시할 프로젝트가 없어요.':'해당 상태의 프로젝트가 없어요.'}</p>}
