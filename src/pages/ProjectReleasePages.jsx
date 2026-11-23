@@ -112,7 +112,7 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
  const features=draft.features.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
  const invalidFeatures=features.length>10||features.some(line=>line.length>250);
  const today=projectDate();
- const invalidDate=Boolean(draft.expected_completion_date && draft.expected_completion_date<today);
+ const invalidDate=!draft.expected_completion_date||draft.expected_completion_date<today;
  const change=event=>setDraft(previous=>({...previous,[event.target.name]:event.target.value}));
 
  async function run(action) {
@@ -158,9 +158,9 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
     <label>프로젝트 설명<textarea name="description" rows={6} required maxLength={5000} value={draft.description} onChange={change}/></label>
     <label>주요 기능<textarea name="features" rows={4} value={draft.features} onChange={change}
       aria-invalid={invalidFeatures} placeholder="기능을 한 줄에 하나씩 입력해주세요."/></label>
-    <label>프로젝트 상태<select name="release_status" value={draft.release_status} onChange={change}>{releaseStatuses.map(s=><option key={s}>{s}</option>)}</select></label>{draft.release_status===releaseStatuses[3]&&<label>서비스 주소<input type="url" name="deployment_url" required value={draft.deployment_url} onChange={change} placeholder="https://..."/></label>}<label>개발 완료 예정일 (선택)<input type="date" name="expected_completion_date"
+    <label>프로젝트 상태<select name="release_status" value={draft.release_status} onChange={change}>{releaseStatuses.map(s=><option key={s}>{s}</option>)}</select></label>{draft.release_status===releaseStatuses[3]&&<label>서비스 주소<input type="url" name="deployment_url" required value={draft.deployment_url} onChange={change} placeholder="https://..."/></label>}<label>개발 완료 예정일 (필수)<input type="date" name="expected_completion_date" required
       min={today} value={draft.expected_completion_date} onChange={change} /></label>
-    {invalidDate&&<p className="release-error" role="alert">예상 개발 완료일은 오늘 이후로 선택해주세요.</p>}
+    {invalidDate&&<p className="wp-demo">개발 완료 예정일을 오늘 또는 이후 날짜로 선택해주세요.</p>}
     {invalidFeatures&&<p className="release-error" role="alert">주요 기능은 10개까지, 한 줄에 250자까지 입력할 수 있어요.</p>}
 
     {error&&<p className="release-error" role="alert">{error}</p>}
