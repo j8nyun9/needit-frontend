@@ -20,5 +20,5 @@ export function isLinkedProject(project, problem) {
 }
 
 export function projectStatusClass(status) {
- return status==='서비스 운영 중'?'release-live':status==='기획 중'?'planning':'developing';
+ return status==='서비스 운영 중'?'release-live':status==='기획 중'?'planning':status==='테스트 중'?'testing':'developing';
 }

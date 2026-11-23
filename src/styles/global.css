@@ -120,3 +120,7 @@
 
 .my-filter-toggle > span:first-child { padding:0; border:0; background:transparent; color:inherit; border-radius:0; }
 .my-filter-toggle .my-filter-switch { width:26px; height:15px; padding:2px; border:0; flex-shrink:0; }
+
+/* Keep Korean words intact when the viewport narrows. */
+.code-comment,.hero-copy h1,.hero-description{word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty;}
+.hero-copy .code-comment .numbered-line{height:auto;white-space:normal;word-break:keep-all;}

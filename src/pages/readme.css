@@ -3,3 +3,28 @@
 /* Keep the README outline visible while the document scrolls. */
 @media(min-width:721px){.readme-window{overflow:clip}.readme-outline{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow-y:auto}.readme-layout{background:linear-gradient(to right,#191f26 220px,transparent 220px)}}
 @media(min-width:721px) and (max-width:1000px){.readme-layout{background:linear-gradient(to right,#191f26 180px,transparent 180px)}}
+/* File preview and compact README metadata. */
+.readme-filebar .readme-active-file{position:relative;background:#1c2128;border-top-color:#77a9ed;padding:16px 24px;font-weight:600;}
+.readme-filebar .readme-active-file:after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:#1c2128;}
+.readme-filebar .readme-file-dot{display:none;}
+.readme-document{font-size:15px;line-height:1.9;padding:44px 48px 36px;}
+.readme-document header{margin-bottom:44px;}
+.readme-document h1{font-size:36px;letter-spacing:-.6px;}
+.readme-lead{font-size:19px;margin:10px 0 20px;}
+.readme-document section{margin-top:44px;}
+.readme-document h2{font-size:22px;line-height:1.5;padding-bottom:10px;margin-bottom:18px;}
+.readme-document h3{font-size:16px;line-height:1.6;}
+.readme-document blockquote{background:transparent;border-left:3px solid #52677f;padding:4px 18px;margin-top:24px;}
+.readme-tech-badges{gap:8px;}
+.readme-tech-badges > .readme-tech-badge{display:inline-flex;align-items:stretch;padding:0;border:0;border-radius:3px;overflow:hidden;background:transparent;color:#c4d0df;font:11px/1.8 Consolas,monospace;}
+.readme-tech-badge > span{padding:2px 7px;background:#343c46;color:#c2cad5;}
+.readme-tech-badge > strong{padding:2px 8px;color:#d5e8ff;background:#284562;font-weight:500;}
+.readme-tech-badge.react > strong{background:#25434e;color:#9ce1f3;}
+.readme-tech-badge.node > strong,.readme-tech-badge.supabase > strong{background:#294536;color:#a7dfb9;}
+.readme-tech-badge.express > strong{background:#45494f;color:#e3e6eb;}
+.readme-tech-badge.gemini > strong{background:#41345b;color:#d6bcfa;}
+.readme-steps li{padding:16px 0;border-bottom:0;}
+.readme-document .readme-note{background:transparent;border-left:2px solid #45556b;border-radius:0;padding:4px 16px;margin-top:20px;}
+.readme-code pre{white-space:pre-wrap;overflow-wrap:anywhere;}
+@media(max-width:1000px){.readme-document{padding:34px 30px;}}
+@media(max-width:720px){.readme-document{padding:28px 22px;}.readme-document h1{font-size:30px;}.readme-document h2{font-size:20px;}.readme-document section{margin-top:34px;}.readme-document header{margin-bottom:34px;}.readme-lead{font-size:17px;}.readme-document blockquote{font-size:13px;}}

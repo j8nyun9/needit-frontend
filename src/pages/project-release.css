@@ -74,3 +74,40 @@
 .linked-project-dialog .wp-project-detail { grid-template-columns:minmax(0,1fr); }
 .linked-project-dialog .release-title { flex-wrap:wrap; }
 .linked-project-dialog .release-title h1 { font-size:26px; overflow-wrap:anywhere; }
+
+.release-title .release-owner-badge{color:#a7dfad;background:rgba(94,184,112,.12);border:1px solid rgba(94,184,112,.4);}
+
+.wp-box > h2.project-introduction-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.project-introduction-heading .button{flex-shrink:0;font-size:14px;padding:7px 14px;}
+
+.status.planning{color:#ebcb83;background:#3b3424;}
+.status.developing{color:#91c6ff;background:#25364c;}
+.status.testing{color:#ccb4ff;background:#352b49;}
+.status.release-live{color:#85e7b1;background:#193d34;}
+.release-stages .release-stage{border-bottom:2px solid currentColor;padding:5px 8px;opacity:.55;}
+.release-stages .planning{color:#ebcb83;}
+.release-stages .developing{color:#91c6ff;}
+.release-stages .testing{color:#ccb4ff;}
+.release-stages .release-live{color:#85e7b1;}
+.release-stages .current{opacity:1;font-weight:700;}
+
+.release-stages .release-stage{color:#8f969e;background:transparent;border-bottom-color:#535b64;opacity:1;}
+.release-stages .reached.planning{color:#ebcb83;border-bottom-color:currentColor;}
+.release-stages .reached.developing{color:#91c6ff;border-bottom-color:currentColor;}
+.release-stages .reached.testing{color:#ccb4ff;border-bottom-color:currentColor;}
+.release-stages .reached.release-live{color:#85e7b1;border-bottom-color:currentColor;}
+
+.release-stages .release-stage{border-bottom:0;text-decoration:none;}
+
+.my-page .status.my-project-unlinked{color:#a5adb7;background:#30363d;}
+.my-page .my-item > .status{flex-shrink:0;white-space:nowrap;}
+
+.my-page .my-item-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.my-page .my-item-title .my-item-count{margin-left:0;flex-shrink:0;}
+
+.my-page .my-item-liked > svg{color:#ef555f;fill:currentColor;}
+
+.my-page .my-item-count.my-item-liked{color:#ef555f;}
+
+.my-page .my-item p.my-service-introduction{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;}
+.my-service-introduction strong{font-weight:500;color:#c7d2df;}

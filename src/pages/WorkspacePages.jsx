@@ -285,7 +285,7 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
               <IssueTime value={comment.created_at} className="wp-comment-time"/>
               {deletable && comment.can_delete === true && (
                 <button className="wp-comment-delete" type="button" disabled={posting || deleting}
-                  onClick={() => { setDeleteError(''); setDeleteTargetId(comment.id); }}>댓글 삭제</button>
+                  onClick={() => { setDeleteError(''); setDeleteTargetId(comment.id); }}>삭제</button>
               )}
             </div>
             <CommentEditor key={String(comment.id)+String(accountId)} comment={comment} problemId={problem.id} canEdit={deletable&&(comment.can_edit===true||comment.can_delete===true)} disabled={posting||deleting} onSaved={row=>setComments(previous=>previous.map(item=>String(item.id)===String(row.id)?{...item,...row}:item))}/>
