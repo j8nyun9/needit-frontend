@@ -41,3 +41,36 @@
 .release-card-launch > .button { min-height:0; padding:7px 11px; font-size:12px; line-height:1.4; }
 
 .release-content-label { display:block; margin-bottom:4px; font-size:12px; font-weight:600; color:#d0dceb; }
+
+.release-card-features { margin:6px 0 0; padding-left:18px; }
+.release-card-features li { margin:4px 0; line-height:1.7; overflow-wrap:anywhere; }
+
+.release-related-browse-row { display:flex; align-items:flex-start; gap:16px; }
+.release-related-browse-list { flex:1; min-width:0; }
+.release-related-browse-row > .button { margin-top:4px; flex-shrink:0; }
+.release-related-browse-list .release-related-item { padding:12px 0; border-bottom:0; }
+@media(max-width:480px){.release-related-browse-row{flex-wrap:wrap}.release-related-browse-row > .button{margin-left:auto}}
+
+.linked-project-dialog { width:min(640px,calc(100vw - 32px)); max-height:80vh; padding:0; color:#edf0f5; background:#1c2229; border:1px solid #465466; border-radius:12px; }
+.linked-project-dialog::backdrop { background:#0009; }
+.linked-project-dialog-header { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px 22px; background:#252e38; border-bottom:1px solid #3c4856; }
+.linked-project-dialog-header h2 { font-size:19px; margin:0; }
+.linked-project-dialog-body { padding:22px; }
+.linked-project-source { margin:0 0 18px; color:#acbbcf; line-height:1.7; }
+.linked-project-results { list-style:none; padding:0; margin:0; }
+.linked-project-results li+li { border-top:1px solid #354151; }
+.linked-project-open { display:flex; flex-direction:column; align-items:flex-start; gap:10px; width:100%; padding:18px 8px; text-align:left; }
+.linked-project-open:hover { background:#263241; }
+.linked-project-open:focus-visible { outline:2px solid #82b8ff; outline-offset:-2px; }
+.linked-project-open strong { font-size:17px; color:#d2e4ff; }
+.linked-project-description { color:#b1bfd0; line-height:1.7; }
+.linked-project-date { color:#8fa2bc; font-size:12px; }
+
+.linked-project-dialog { width:min(1080px,calc(100vw - 40px)); }
+.linked-project-cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+@media(max-width:700px){.linked-project-cards{grid-template-columns:1fr}.linked-project-dialog-body{padding:16px}}
+
+.linked-project-dialog-body > .wp-page { padding:0; margin:0; max-width:none; width:100%; }
+.linked-project-dialog .wp-project-detail { grid-template-columns:minmax(0,1fr); }
+.linked-project-dialog .release-title { flex-wrap:wrap; }
+.linked-project-dialog .release-title h1 { font-size:26px; overflow-wrap:anywhere; }

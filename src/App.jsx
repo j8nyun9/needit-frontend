@@ -58,7 +58,7 @@ export default function App(){
  function openProject(row){setPageState(previous=>({type:'project',data:row,back:previous}));}
  function openProjectDraft(problem) {
   if(!requireLogin()||!problem.ai_plan_access||String(problem.ai_plan_owner_id)!==String(user.id)||
-   !problem.ai_plan||problem.project_id!=null)return;
+   !problem.ai_plan)return;
   setPageState({type:'project-draft',data:problem,accountId:user.id,back:page});
  }
  function finishProjectCreation(project,problemId) {

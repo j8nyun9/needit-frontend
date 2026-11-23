@@ -21,3 +21,5 @@
 .ai-plan-body { position:relative; }
 .ai-plan-body > .ai-copy-icon { position:absolute; top:16px; right:16px; }
 .ai-plan-body > .ai-issue-title { padding-right:30px; }
+
+.ai-adoption-guide { margin:10px 0; font-size:13px; line-height:1.7; color:#b6c9e3; }

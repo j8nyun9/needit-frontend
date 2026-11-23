@@ -129,3 +129,10 @@
 .wp-filters > select { appearance:none; padding-right:34px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23b8c5d6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; }
 
 .wp-page .wp-filters > select { width:140px; min-width:140px; flex:0 0 140px; padding:12px 42px 12px 16px; font-size:16px; line-height:1.5; box-sizing:border-box; }
+
+.wp-comment-editor textarea { display:block; width:100%; margin:8px 0; min-height:85px; font-size:14px; }
+.wp-comment-editor label { font-size:13px; color:#b4c5dc; }
+.wp-comment-edit-trigger { padding:3px 0; margin-top:6px; color:#9abfea; font-size:12px; }
+.wp-comment-edit-trigger:hover { text-decoration:underline; }
+.wp-comment-edit-actions { display:flex; gap:8px; }
+.wp-comment-edit-actions .button { padding:6px 12px; min-height:0; font-size:12px; }

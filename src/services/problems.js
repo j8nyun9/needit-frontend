@@ -30,7 +30,7 @@ async function request(path,options={},retried=false){
  if(!response.ok){
   const message=response.status===404&&!preservePageOnAuthError?'요청한 불편함 또는 AI API를 찾지 못했어요. 최신 백엔드 배포를 확인해주세요.':body?.ai_error?.message||body?.error||`서버 오류가 발생했어요 (${response.status}).`;
   if(response.status===401&&!preservePageOnAuthError&&typeof window!=='undefined')window.dispatchEvent(new Event('needit-auth-expired'));
-  const error=new Error(message);error.status=response.status;
+  const error=new Error(message);error.status=response.status;if(response.status===409&&body?.project?.id!=null)error.project=body.project;
   const wait=Number(body?.retry_after||response.headers.get('Retry-After'));
   if(Number.isFinite(wait)&&wait>0)error.retryAfter=wait;
   throw error;

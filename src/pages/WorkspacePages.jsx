@@ -1,3 +1,4 @@
+import CommentEditor from '../components/CommentEditor.jsx';
 import useMyFilter from '../hooks/useMyFilter.js';
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -287,7 +288,7 @@ export function IssueDetailPage({ problem, liked, onLike, onBack, onProject, onP
                   onClick={() => { setDeleteError(''); setDeleteTargetId(comment.id); }}>댓글 삭제</button>
               )}
             </div>
-            <p>{comment.content}</p>
+            <CommentEditor key={String(comment.id)+String(accountId)} comment={comment} problemId={problem.id} canEdit={deletable&&(comment.can_edit===true||comment.can_delete===true)} disabled={posting||deleting} onSaved={row=>setComments(previous=>previous.map(item=>String(item.id)===String(row.id)?{...item,...row}:item))}/>
           </div>
         </div>)}
         <dialog ref={deleteDialog} className="problem-delete-dialog" aria-labelledby={deleteHeading}

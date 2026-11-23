@@ -4,7 +4,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import Icon from '../components/common/Icon.jsx';
 import {useAuth} from '../contexts/AuthContext.jsx';
 import {createProject,getProject,saveProject,favoriteProject,postFeedback,releaseStatuses,serviceUrl,listNotifications,readNotification} from '../services/projects.js';
-import {getProblem} from '../services/problems.js';
+import {getProblem,apiRequest} from '../services/problems.js';
 import './project-release.css';
 import ServiceRegistration from '../components/ServiceRegistration.jsx';
 import ServiceLaunchCard from '../components/ServiceLaunchCard.jsx';
@@ -28,19 +28,21 @@ function ProblemProjectCount({problem}) {
  return <span className="status developing wp-project-count">연결된 프로젝트 {count}개</span>;
 }
 
-export function ProblemProjectLinks({problem,projects=[],onOpenProject,onOpenProjectList}) {
- const hasProjectIds=Array.isArray(problem.project_ids);
- const ids=hasProjectIds?problem.project_ids:problem.project_id==null?[]:[problem.project_id];
- return <div className="wp-project-links">
-  <ProblemProjectCount problem={problem}/>
-  {ids.map(id=>{
-   const project=projects.find(item=>String(item.id)===String(id));
-   if(project?.title?.trim()==='공지 모아보기')return null;
-   const label=hasProjectIds?(project?.title||`프로젝트 #${id} 보기`):'연결된 프로젝트 보기';
-   return <button key={id} className="button primary" type="button" onClick={()=>onOpenProject({id})}>{label}</button>;
-  })}
-  {!ids.length&&onOpenProjectList&&<button className="button primary" type="button" onClick={onOpenProjectList}><Icon name="code" size={20}/>개발 프로젝트 보기</button>}
- </div>;
+export function ProblemProjectLinks({problem,onOpenProject}) {
+ const [selectedProject,setSelectedProject]=useState(null);
+ const [open,setOpen]=useState(false);const [rows,setRows]=useState([]);const [loading,setLoading]=useState(false);const [error,setError]=useState('');const [retry,setRetry]=useState(0);const dialog=useRef(null);const trigger=useRef(null);
+ useEffect(()=>{if(dialog.current)dialog.current.scrollTop=0;},[selectedProject?.id]);
+ useEffect(()=>{setOpen(false);setRows([]);setSelectedProject(null);},[problem.id]);
+ useEffect(()=>{if(open)dialog.current?.showModal();else dialog.current?.close();},[open]);
+ useEffect(()=>{if(!open)return;const controller=new AbortController();setLoading(true);setError('');setRows([]);apiRequest('/projects?related_problem_id='+encodeURIComponent(problem.id),{signal:controller.signal}).then(data=>{if(!Array.isArray(data))throw new Error('프로젝트 목록을 확인하지 못했어요.');if(!controller.signal.aborted)setRows(data);}).catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();},[open,problem.id,retry]);
+ function close(){setSelectedProject(null);setOpen(false);trigger.current?.focus();}
+ return <div className="wp-project-links"><ProblemProjectCount problem={problem}/><button ref={trigger} className="button primary" type="button" onClick={()=>{setSelectedProject(null);setOpen(true);}}>연결된 프로젝트 보기</button>
+ <dialog ref={dialog} className="linked-project-dialog" aria-labelledby={'linked-project-title-'+problem.id} onCancel={close} onClick={e=>{if(e.target===e.currentTarget)close();}}>
+  <div className="linked-project-dialog-header"><h2 id={'linked-project-title-'+problem.id}>연결된 프로젝트</h2><button type="button" className="icon-button" aria-label="닫기" onClick={close}><Icon name="close" size={20}/></button></div>
+  <div className="linked-project-dialog-body">{selectedProject?<ProjectDetailPage key={selectedProject.id} project={selectedProject} backLabel="연결된 프로젝트 목록으로" onBack={()=>setSelectedProject(null)} onIssues={close} onIssue={close} onUpdate={saved=>{setSelectedProject(previous=>({...previous,...saved}));setRows(previous=>previous.map(p=>String(p.id)===String(saved.id)?{...p,...saved}:p));}}/>:<><p className="linked-project-source">#{problem.id} {problem.title}</p>
+   {loading?<p role="status">프로젝트를 불러오는 중이에요.</p>:error?<div role="alert"><p>{error}</p><button className="button outline" type="button" onClick={()=>setRetry(n=>n+1)}>다시 시도</button></div>:rows.length?<div className="wp-project-grid linked-project-cards">{rows.map(p=><article className="wp-box release-directory-card" key={p.id}><div className="wp-box-body"><div className="release-card-meta"><div className="release-card-heading"><Icon name="folder" size={22}/><h3><button type="button" className="release-card-title-link" onClick={()=>setSelectedProject(p)}>{p.title}</button></h3></div><span className={'status '+projectStatusClass(projectDisplayStatus(p))}>{projectDisplayStatus(p)}</span></div><p className="wp-demo"><strong className="release-content-label">시작 문제</strong>{problem.title}</p><div className="release-directory-note"><strong className="release-content-label">프로젝트 설명 · 주요 기능</strong>{Array.isArray(p.features)&&p.features.some(f=>typeof f==='string'&&f.trim())?<ul className="release-card-features">{p.features.filter(f=>typeof f==='string'&&f.trim()).map((f,i)=><li key={i}>{f}</li>)}</ul>:<p className="wp-demo">등록된 주요 기능이 없어요.</p>}</div><div className="release-card-footer"><p className="wp-demo">개발 완료 예정일: {p.expected_completion_date||'미정'}</p></div></div></article>)}</div>:<p>아직 연결된 프로젝트가 없어요.</p>}
+  </>} </div>
+ </dialog></div>;
 }
 
 export function ProjectsPage({projects,problems,onOpen,onCreated,projectToday}){
@@ -75,7 +77,7 @@ export function ProjectsPage({projects,problems,onOpen,onCreated,projectToday}){
       <div className="release-card-meta"><div className="release-card-heading"><Icon name="folder" size={22}/><h3><button type="button" className="release-card-title-link" onClick={()=>onOpen(project)}>{project.title}</button></h3></div><div className="release-card-status-actions"><span className={'status '+projectStatusClass(label)}>{label}</span></div></div>
       
       {issue&&<p className="wp-demo"><strong className="release-content-label">시작 문제</strong>{issue.title}</p>}
-      <p className="release-directory-note"><strong className="release-content-label">프로젝트 설명</strong>{project.description}</p>
+      <div className="release-directory-note"><strong className="release-content-label">프로젝트 설명 · 주요 기능</strong>{Array.isArray(project.features)&&project.features.some(f=>typeof f==='string'&&f.trim())?<ul className="release-card-features">{project.features.filter(f=>typeof f==='string'&&f.trim()).map((feature,index)=><li key={index}>{feature}</li>)}</ul>:<p className="wp-demo">등록된 주요 기능이 없어요.</p>}</div>
       <div className="release-card-bottom"><div className="release-card-footer">
        <p className="wp-demo">개발 완료 예정일: {project.expected_completion_date||'미정'}</p>
 
@@ -103,8 +105,9 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
  }));
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
- const [conflict,setConflict]=useState(false);
- const [projectId,setProjectId]=useState(problem.project_id ?? null);
+ const [existingProject,setExistingProject]=useState(null);
+
+
  const request=useRef(null);
  useEffect(()=>()=>request.current?.abort(),[]);
  const features=draft.features.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
@@ -112,14 +115,6 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
  const today=projectDate();
  const invalidDate=Boolean(draft.expected_completion_date && draft.expected_completion_date<today);
  const change=event=>setDraft(previous=>({...previous,[event.target.name]:event.target.value}));
-
- async function refreshProblem(signal) {
-  const issue=await getProblem(problem.id,signal);
-  if(signal.aborted)return;
-  setProjectId(issue.project_id ?? null);
-  setConflict(issue.project_id != null);
-  onProblemUpdate(issue);
- }
 
  async function run(action) {
   if(request.current)return;
@@ -137,7 +132,7 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
 
  function submit(event) {
   event.preventDefault();
-  if(conflict||projectId!=null||invalidFeatures||invalidDate||!draft.title.trim()||!draft.description.trim())return;
+  if(existingProject||invalidFeatures||invalidDate||!draft.title.trim()||!draft.description.trim())return;
   run(async signal=>{
    try{
     const project=await createProject({
@@ -148,9 +143,8 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
     if(!signal.aborted)onCreated(project,problem.id);
    }catch(error){
     if(signal.aborted)return;
-    if(error.status!==409)throw error;
-    setConflict(true);
-    await refreshProblem(signal);
+    if(error.status===409&&error.project){setExistingProject(error.project);setError(error.message);return;}
+    throw error;
    }
   });
  }
@@ -168,12 +162,10 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
       min={today} value={draft.expected_completion_date} onChange={change} /></label>
     {invalidDate&&<p className="release-error" role="alert">예상 개발 완료일은 오늘 이후로 선택해주세요.</p>}
     {invalidFeatures&&<p className="release-error" role="alert">주요 기능은 10개까지, 한 줄에 250자까지 입력할 수 있어요.</p>}
-    {(conflict||projectId!=null)&&<p className="release-error" role="status">이미 다른 프로젝트에 채택된 불편함이에요.</p>}
+
     {error&&<p className="release-error" role="alert">{error}</p>}
     <div className="release-actions">
-     {projectId!=null?<button className="button primary" type="button" onClick={()=>onOpenProject({id:projectId})}>연결된 프로젝트 보기</button>
-      :conflict?<button className="button outline" type="button" onClick={()=>run(refreshProblem)}>채택 상태 다시 확인</button>
-      :<button className="button primary" type="submit" disabled={invalidFeatures||invalidDate||!draft.title.trim()||!draft.description.trim()}>{busy?'등록 중…':'프로젝트 등록하기'}</button>}
+     {existingProject?<button className="button primary" type="button" onClick={()=>onOpenProject(existingProject)}>내 프로젝트 보기</button>:<button className="button primary" type="submit" disabled={invalidFeatures||invalidDate||!draft.title.trim()||!draft.description.trim()}>{busy?'등록 중…':'프로젝트 등록하기'}</button>}
      <button className="button outline" type="button" onClick={onCancel}>취소</button>
     </div>
    </fieldset>
@@ -197,7 +189,7 @@ export function ProjectDetailPage({project:initial,onBack,onIssues,onIssue,onUpd
  const canManage=Boolean(startEditing&&project.can_edit);
  const canFeedback=project.status===releaseStatuses[3];
  const launched=project.status==='서비스 운영 중'&&Boolean(serviceUrl(project.deployment_url));
- return <div className="wp-page"><button className="wp-back" onClick={onBack}>← {backLabel||'프로젝트 목록으로'}</button>{loading?<p role="status">프로젝트를 불러오는 중이에요…</p>:<><p className="code-comment">// 학생의 불편함에서 시작된 프로젝트</p><div className="release-title"><h1>{project.title}</h1><span className={'status '+(project.status==='서비스 운영 중'?'release-live':'developing')}>{statusLabel}</span></div><p className="wp-long-copy">{project.description}</p><ServiceLaunchCard project={project}/><div className="release-actions">{launched&&<button type="button" className="button outline" onClick={()=>setTab('후기·오류 제보')}>이용 의견 남기기</button>}<button className="button outline" disabled={busy} aria-pressed={Boolean(project.interested)} onClick={()=>action(async()=>{const row=await favoriteProject(project.id,!project.interested);update(row.id?row:{...project,...row});})}>{project.interested?'♥ 관심 등록됨':'♡ 관심 등록'}</button>{canManage&&<button className="button outline" onClick={()=>setEditing(!editing)}>{project.status==='서비스 운영 중'?'서비스 공개 정보 수정':'서비스 출시하기'}</button>}{canManage&&<ServiceUnpublishButton project={project} onUnpublished={saved=>{update(saved);setEditing(false);}}/>}</div>{editing&&canManage&&<PublicationEditor project={project} onCancel={()=>setEditing(false)} onSaved={p=>{update(p);setEditing(false);}}/>}<div className="wp-project-detail"><div><div className="wp-detail-tabs">{['소개','관련 불편함','후기·오류 제보'].map(t=><button key={t} className={tab===t?'selected':''} onClick={()=>setTab(t)}>{t}</button>)}</div>{tab==='소개'?<section className="wp-box"><h2>서비스 소개 및 사용 방법</h2><div className="wp-box-body"><p className="release-copy">{project.description}</p><h3>사용 방법</h3><p className="release-copy">{project.usage_guide||'아직 등록된 사용 방법이 없어요.'}</p>{Array.isArray(project.features)&&project.features.length>0&&<><h3>주요 기능</h3><ul>{project.features.map((f,i)=><li key={i}>{typeof f==='string'?f:JSON.stringify(f)}</li>)}</ul></>}</div></section>:tab==='관련 불편함'?<section className="wp-box"><h2>이 프로젝트가 해결하는 불편함</h2><div className="wp-box-body">{project.related_problems?.map(p=><button className="release-related-item" key={p.id} onClick={()=>onIssue(p)}>#{p.id} {p.title} →</button>)}{!project.related_problems?.length&&<p>연결된 불편함이 없어요.</p>}<button className="button outline" onClick={onIssues}>불편함 탐색하기</button></div></section>:<section className="wp-box"><h2>사용 후기 · 오류 제보</h2><div className="wp-box-body">{!canFeedback&&<p className="wp-demo" role="status">프로젝트가 완료되면 피드백을 작성할 수 있어요. (서비스 운영 중)</p>}{canFeedback&&<form onSubmit={e=>{e.preventDefault();action(async()=>{const row=await postFeedback(project.id,{kind,content});setProject(p=>({...p,feedback:[row,...(p.feedback||[])]}));setContent('');});}}><fieldset disabled={busy}><label>의견 종류<select value={kind} onChange={e=>setKind(e.target.value)} aria-label="의견 종류"><option value="review">사용 후기</option><option value="bug">오류 제보</option></select></label><textarea aria-label="후기 또는 오류 내용" rows={4} maxLength={1000} required value={content} onChange={e=>setContent(e.target.value)} placeholder="도움이 된 점이나 오류가 발생한 상황을 알려주세요."/><button className="button primary" type="submit">{busy?'등록 중…':'의견 등록'}</button></fieldset></form>}{project.feedback?.map(f=><article className="release-feedback" key={f.id}><strong>{f.kind==='bug'?'오류 제보':'사용 후기'} · {f.author_name}</strong><time dateTime={f.created_at}>{new Date(f.created_at).toLocaleDateString('ko-KR')}</time><p className="release-copy">{f.content}</p><FeedbackActions key={String(f.id)+String(user?.id)} feedback={f} projectId={project.id} onSaved={row=>setProject(p=>({...p,feedback:p.feedback.map(item=>item.id===row.id?{...item,...row}:item)}))} onDeleted={id=>setProject(p=>({...p,feedback:p.feedback.filter(item=>item.id!==id)}))}/>{launched&&<ProjectFeedbackReaction key={user?.id??'guest'} projectId={project.id} feedbackId={f.id} userId={user?.id}/>}</article>)}{canFeedback&&!project.feedback?.length&&<p className="wp-demo">첫 번째 의견을 남겨주세요.</p>}</div></section>}</div><aside><section className="wp-box"><h2>프로젝트 진행 현황</h2><div className="wp-box-body"><ol className="release-stages">{releaseStatuses.map(s=><li className={s===project.status?'current':''} key={s}>{s}</li>)}</ol>{project.expected_completion_date&&<p className="wp-demo">개발 완료 예정일 <time dateTime={project.expected_completion_date}>{project.expected_completion_date}</time></p>}{canManage&&<ProjectProgressEditor project={project} today={projectToday} onSaved={update}/>}</div></section><section className="wp-box"><h2>프로젝트 기본 정보</h2><div className="wp-box-body"><p>개발 팀: {project.team_name||'미등록'}</p>{serviceUrl(project.github_url)&&<p><a href={serviceUrl(project.github_url)} target="_blank" rel="noopener noreferrer">GitHub ↗</a></p>}<ServiceLink project={project}/>{!serviceUrl(project.deployment_url)&&<p className="wp-demo">배포 주소 등록 전이에요.</p>}{project.released_at&&<p className="wp-demo">출시일 {new Date(project.released_at).toLocaleDateString('ko-KR')}</p>}</div></section></aside></div></>}{error&&<div className="release-error" role="alert">{error}<button className="button outline" onClick={()=>setRetry(n=>n+1)}>다시 불러오기</button></div>}</div>;
+ return <div className="wp-page"><button className="wp-back" onClick={onBack}>← {backLabel||'프로젝트 목록으로'}</button>{loading?<p role="status">프로젝트를 불러오는 중이에요…</p>:<><p className="code-comment">// 학생의 불편함에서 시작된 프로젝트</p><div className="release-title"><h1>{project.title}</h1><span className={'status '+(project.status==='서비스 운영 중'?'release-live':'developing')}>{statusLabel}</span></div><ServiceLaunchCard project={project}/><div className="release-actions">{launched&&<button type="button" className="button outline" onClick={()=>setTab('후기·오류 제보')}>이용 의견 남기기</button>}<button className="button outline" disabled={busy} aria-pressed={Boolean(project.interested)} onClick={()=>action(async()=>{const row=await favoriteProject(project.id,!project.interested);update(row.id?row:{...project,...row});})}>{project.interested?'♥ 관심 등록됨':'♡ 관심 등록'}</button>{canManage&&<button className="button outline" onClick={()=>setEditing(!editing)}>{project.status==='서비스 운영 중'?'서비스 공개 정보 수정':'서비스 출시하기'}</button>}{canManage&&<ServiceUnpublishButton project={project} onUnpublished={saved=>{update(saved);setEditing(false);}}/>}</div>{editing&&canManage&&<PublicationEditor project={project} onCancel={()=>setEditing(false)} onSaved={p=>{update(p);setEditing(false);}}/>}<div className="wp-project-detail"><div><div className="wp-detail-tabs">{['소개','관련 불편함','후기·오류 제보'].map(t=><button key={t} className={tab===t?'selected':''} onClick={()=>setTab(t)}>{t}</button>)}</div>{tab==='소개'?<section className="wp-box"><h2>서비스 소개 및 사용 방법</h2><div className="wp-box-body"><p className="release-copy">{project.description}</p><h3>사용 방법</h3><p className="release-copy">{project.usage_guide||'아직 등록된 사용 방법이 없어요.'}</p>{Array.isArray(project.features)&&project.features.length>0&&<><h3>주요 기능</h3><ul>{project.features.map((f,i)=><li key={i}>{typeof f==='string'?f:JSON.stringify(f)}</li>)}</ul></>}</div></section>:tab==='관련 불편함'?<section className="wp-box"><h2>이 프로젝트가 해결하는 불편함</h2><div className="wp-box-body"><div className="release-related-browse-row"><div className="release-related-browse-list">{project.related_problems?.map(p=><button className="release-related-item" key={p.id} onClick={()=>onIssue(p)}>#{p.id} {p.title}</button>)}{!project.related_problems?.length&&<p>연결된 불편함이 없어요.</p>}</div><button className="button outline" onClick={onIssues}>불편함 탐색하기</button></div></div></section>:<section className="wp-box"><h2>사용 후기 · 오류 제보</h2><div className="wp-box-body">{!canFeedback&&<p className="wp-demo" role="status">프로젝트가 완료되면 피드백을 작성할 수 있어요. (서비스 운영 중)</p>}{canFeedback&&<form onSubmit={e=>{e.preventDefault();action(async()=>{const row=await postFeedback(project.id,{kind,content});setProject(p=>({...p,feedback:[row,...(p.feedback||[])]}));setContent('');});}}><fieldset disabled={busy}><label>의견 종류<select value={kind} onChange={e=>setKind(e.target.value)} aria-label="의견 종류"><option value="review">사용 후기</option><option value="bug">오류 제보</option></select></label><textarea aria-label="후기 또는 오류 내용" rows={4} maxLength={1000} required value={content} onChange={e=>setContent(e.target.value)} placeholder="도움이 된 점이나 오류가 발생한 상황을 알려주세요."/><button className="button primary" type="submit">{busy?'등록 중…':'의견 등록'}</button></fieldset></form>}{project.feedback?.map(f=><article className="release-feedback" key={f.id}><strong>{f.kind==='bug'?'오류 제보':'사용 후기'} · {f.author_name}</strong><time dateTime={f.created_at}>{new Date(f.created_at).toLocaleDateString('ko-KR')}</time><p className="release-copy">{f.content}</p><FeedbackActions key={String(f.id)+String(user?.id)} feedback={f} projectId={project.id} onSaved={row=>setProject(p=>({...p,feedback:p.feedback.map(item=>item.id===row.id?{...item,...row}:item)}))} onDeleted={id=>setProject(p=>({...p,feedback:p.feedback.filter(item=>item.id!==id)}))}/>{launched&&<ProjectFeedbackReaction key={user?.id??'guest'} projectId={project.id} feedbackId={f.id} userId={user?.id}/>}</article>)}{canFeedback&&!project.feedback?.length&&<p className="wp-demo">첫 번째 의견을 남겨주세요.</p>}</div></section>}</div><aside><section className="wp-box"><h2>프로젝트 진행 현황</h2><div className="wp-box-body"><ol className="release-stages">{releaseStatuses.map(s=><li className={s===project.status?'current':''} key={s}>{s}</li>)}</ol>{project.expected_completion_date&&<p className="wp-demo">개발 완료 예정일 <time dateTime={project.expected_completion_date}>{project.expected_completion_date}</time></p>}{canManage&&<ProjectProgressEditor project={project} today={projectToday} onSaved={update}/>}</div></section><section className="wp-box"><h2>프로젝트 기본 정보</h2><div className="wp-box-body"><p>개발 팀: {project.team_name||'미등록'}</p>{serviceUrl(project.github_url)&&<p><a href={serviceUrl(project.github_url)} target="_blank" rel="noopener noreferrer">GitHub ↗</a></p>}<ServiceLink project={project}/>{!serviceUrl(project.deployment_url)&&<p className="wp-demo">배포 주소 등록 전이에요.</p>}{project.released_at&&<p className="wp-demo">출시일 {new Date(project.released_at).toLocaleDateString('ko-KR')}</p>}</div></section></aside></div></>}{error&&<div className="release-error" role="alert">{error}<button className="button outline" onClick={()=>setRetry(n=>n+1)}>다시 불러오기</button></div>}</div>;
 }
 export function ProjectNotifications({onOpen}){
  const {user,requireLogin}=useAuth();const [open,setOpen]=useState(false);const [rows,setRows]=useState([]);const [error,setError]=useState('');const [loading,setLoading]=useState(false);const dialog=useRef(null);
