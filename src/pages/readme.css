@@ -25,6 +25,6 @@
 .readme-tech-badge.gemini > strong{background:#41345b;color:#d6bcfa;}
 .readme-steps li{padding:16px 0;border-bottom:0;}
 .readme-document .readme-note{background:transparent;border-left:2px solid #45556b;border-radius:0;padding:4px 16px;margin-top:20px;}
-.readme-code pre{white-space:pre-wrap;overflow-wrap:anywhere;}
+.readme-code pre{white-space:pre-wrap;overflow-wrap:break-word;}
 @media(max-width:1000px){.readme-document{padding:34px 30px;}}
 @media(max-width:720px){.readme-document{padding:28px 22px;}.readme-document h1{font-size:30px;}.readme-document h2{font-size:20px;}.readme-document section{margin-top:34px;}.readme-document header{margin-bottom:34px;}.readme-lead{font-size:17px;}.readme-document blockquote{font-size:13px;}}

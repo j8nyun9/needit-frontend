@@ -124,3 +124,107 @@
 /* Keep Korean words intact when the viewport narrows. */
 .code-comment,.hero-copy h1,.hero-description{word-break:keep-all;overflow-wrap:break-word;text-wrap:pretty;}
 .hero-copy .code-comment .numbered-line{height:auto;white-space:normal;word-break:keep-all;}
+
+
+/* Keep the hero actions clear on compact layouts. */
+@media(min-width:721px) and (max-width:1050px){
+ .hero{grid-template-columns:minmax(440px,1.25fr) minmax(0,1fr);gap:16px;}
+ .hero > .editor{width:100%;min-width:0;}
+ .hero > .editor .code-lines{overflow:hidden;}
+ .hero > .editor .code-lines code{white-space:pre;}
+}
+@media(max-width:720px){.hero{grid-template-columns:minmax(0,1fr);}.hero > .editor{display:none;}}
+
+.hero.hero-artwork-hidden{grid-template-columns:minmax(0,1fr);}
+.hero.hero-artwork-hidden > .editor{display:none;}
+.hero > .editor .code-lines code{white-space:pre;}
+
+/* Prefer word boundaries for Korean prose throughout the interface. */
+body{word-break:keep-all;overflow-wrap:break-word;}
+:where(h1,h2,h3,h4,p,li,blockquote,label,button){word-break:keep-all;}
+:where(h1,h2,h3,h4){text-wrap:balance;}
+:where(p,li,blockquote,label){text-wrap:pretty;}
+:where(main,section,article,aside,fieldset){min-width:0;}
+@media(max-width:720px){
+ .hero h1{white-space:normal;}
+ .hero-copy .hero-actions{flex-wrap:wrap;}
+ .hero-copy .hero-actions .button{flex:1 1 180px;min-width:0;white-space:normal;line-height:1.5;}
+ .release-actions,.readme-actions{flex-wrap:wrap;}
+ .release-actions .button,.readme-actions .button{max-width:100%;white-space:normal;line-height:1.5;}
+ .panel-header h2,.wp-box h2{min-width:0;word-break:keep-all;}
+}
+
+/* Let navigation take its own row before header controls become crowded. */
+.header-account{display:flex;align-items:center;gap:12px;min-width:0;}
+.header .brand{flex-shrink:0;}
+.header .header-tools{min-width:0;}
+.header .search{min-width:0;max-width:100%;}
+@media(max-width:1100px){
+ .header{height:auto;}
+ .header .header-inner{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px 20px;padding:16px 24px 0;}
+ .header .brand{grid-column:1;grid-row:1;}
+ .header .header-tools{grid-column:2;grid-row:1;justify-content:flex-end;margin-left:0;gap:14px;}
+ .header .header-tools .search{width:clamp(170px,26vw,330px);}
+ .header .header-inner > nav{grid-column:1/-1;grid-row:2;display:flex;flex-wrap:wrap;gap:0;width:100%;height:auto;order:initial;}
+ .header .nav-item{flex:1 1 auto;height:auto;min-height:48px;padding:12px 10px;border-bottom-width:3px;white-space:nowrap;}
+}
+@media(max-width:800px){
+ .header .header-inner{padding:14px 16px 12px;gap:12px;}
+ .header .brand{font-size:23px;gap:10px;}
+ .header .brand svg{width:27px;}
+ .header .header-tools{display:contents;}
+ .header .header-account{grid-column:2;grid-row:1;justify-content:flex-end;gap:8px;}
+ .header .header-user,.header .avatar{display:none;}
+ .header .header-account .icon-button{display:inline-flex;}
+ .header .header-login{font-size:12px;padding:8px 10px;}
+ .header .header-tools .search{grid-column:1/-1;grid-row:3;width:100%;padding:10px 12px;}
+ .header .search input{font-size:13px;}
+ .header .header-inner > nav{justify-content:center;}
+ .header .nav-item{font-size:12px;padding:10px 5px;min-height:42px;}
+}
+
+/* Compact the desktop row before switching to separate navigation. */
+@media(min-width:1101px) and (max-width:1450px){
+ .header .header-inner{gap:14px;padding-left:24px;padding-right:24px;}
+ .header .brand{font-size:24px;gap:10px;}
+ .header .brand svg{width:28px;}
+ .header .header-inner > nav{gap:0;min-width:0;}
+ .header .nav-item{font-size:14px;padding-left:8px;padding-right:8px;}
+ .header .header-tools{gap:8px;}
+ .header .header-tools .search{width:clamp(140px,14vw,200px);padding:9px 10px;gap:8px;}
+ .header .search input{font-size:12px;}
+ .header .header-account{gap:8px;}
+ .header .header-user{max-width:64px;}
+ .header .header-login{padding:8px 10px;font-size:12px;}
+ .header .avatar{width:32px;height:32px;}
+}
+
+/* Keep search beside the logo even on narrow screens. */
+@media(max-width:800px){
+ .header .header-inner{grid-template-columns:auto minmax(0,1fr);column-gap:10px;}
+ .header .header-tools{display:flex;grid-column:2;grid-row:1;align-items:center;gap:6px;min-width:0;}
+ .header .header-tools .search{display:flex;flex:1 1 0;width:0;min-width:0;grid-column:auto;grid-row:auto;padding:8px 7px;gap:5px;}
+ .header .search > svg{width:16px;height:16px;}
+ .header .search input{font-size:12px;text-overflow:ellipsis;min-width:0;}
+ .header .header-account{display:flex;flex:0 0 auto;gap:4px;}
+ .header .header-account .icon-button{padding:4px;}
+ .header .header-account .icon-button svg{width:21px;height:21px;}
+ .header .header-login{font-size:11px;padding:7px 8px;}
+ .header .brand{font-size:21px;gap:6px;}
+ .header .brand svg{width:24px;}
+}
+@media(max-width:400px){
+ .header .header-inner{padding-left:12px;padding-right:12px;column-gap:8px;}
+ .header .brand{font-size:19px;gap:5px;}
+ .header .brand svg{width:21px;}
+}
+
+@media(max-width:440px){.header .search > svg{display:none;}.header .header-tools .search{padding-left:8px;padding-right:8px;}}
+
+/* Reveal the mobile header when scrolling back up. */
+@media(max-width:800px){
+ .header{position:sticky;top:0;z-index:40;transform:translateY(0);transition:transform .2s ease;box-shadow:0 4px 16px #0002;}
+ .header.header-scroll-hidden{transform:translateY(-100%);pointer-events:none;}
+ .header.header-scroll-hidden:focus-within{transform:translateY(0);pointer-events:auto;}
+}
+@media(prefers-reduced-motion:reduce){.header{transition:none;}}

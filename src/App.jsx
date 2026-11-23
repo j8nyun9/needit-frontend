@@ -1,3 +1,5 @@
+import AdaptiveSearchInput from './components/AdaptiveSearchInput.jsx';
+import ResponsiveHeroArtwork from './components/ResponsiveHeroArtwork.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from './components/common/Icon.jsx';
 import {AuthContext,LoginRequired} from './contexts/AuthContext.jsx';
@@ -25,6 +27,27 @@ const initialProblems = [
 const footerPages = ['홈','불편함 탐색','프로젝트','서비스 소개','마이페이지'];
 
 export default function App(){
+ const [headerVisible,setHeaderVisible]=useState(true);
+ useEffect(()=>{
+  const mobile=window.matchMedia('(max-width:800px)');
+  let previous=Math.max(0,window.scrollY),travel=0,direction=0,frame;
+  function update(){
+   frame=null;
+   const position=Math.max(0,window.scrollY),delta=position-previous;
+   previous=position;
+   if(!mobile.matches||position<24){travel=0;direction=0;setHeaderVisible(true);return;}
+   const nextDirection=Math.sign(delta);
+   if(!nextDirection)return;
+   if(nextDirection!==direction){travel=0;direction=nextDirection;}
+   travel+=Math.abs(delta);
+   if(travel>=10){setHeaderVisible(direction<0);travel=0;}
+  }
+  function scroll(){if(frame==null)frame=requestAnimationFrame(update);}
+  function reset(){previous=Math.max(0,window.scrollY);travel=0;direction=0;setHeaderVisible(true);}
+  window.addEventListener('scroll',scroll,{passive:true});mobile.addEventListener('change',reset);
+  return()=>{if(frame!=null)cancelAnimationFrame(frame);window.removeEventListener('scroll',scroll);mobile.removeEventListener('change',reset);};
+ },[]);
+
  const [user,setUser]=useState(null);
  const [authLoading,setAuthLoading]=useState(true);
  function updateProfile(profile){setUser(previous=>previous?.id===profile.id?{...previous,name:profile.name}:previous);}
@@ -198,10 +221,10 @@ export default function App(){
  }
 
  return <AuthContext.Provider value={{user,requireLogin}}>
-  <header className="header"><div className="header-inner">
+  <header className={"header"+(headerVisible?"":" header-scroll-hidden")}><div className="header-inner">
    <a className="brand" href="#" onClick={e=>{e.preventDefault();setPage(null);setTab('홈');setQuery('');}} aria-label="NEEDIT 홈"><Icon name="code" size={34}/><span>NEEDIT</span></a>
    <nav aria-label="주 메뉴">{['홈','불편함 탐색','프로젝트','서비스 소개','마이페이지'].map(item=><button key={item} className={tab===item?'nav-item active':'nav-item'} aria-current={tab===item?'page':undefined} onClick={()=>{setPage(null);setTab(item);}}>{item}</button>)}</nav>
-   <div className="header-tools"><label className="search"><Icon name="search" size={21}/><input aria-label="불편함이나 프로젝트 검색" placeholder="불편함이나 프로젝트를 검색하세요" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label="검색 지우기" onClick={()=>setQuery('')}><Icon name="close" size={16}/></button>}</label><ProjectNotifications onOpen={openProject}/><button className="header-login" onClick={()=>user?signOut():setPage({type:'login'})}>{user?'로그아웃':'로그인'}</button>{user&&<span className="header-user">{user.name}님</span>}<button className="avatar" aria-label="내 프로필" onClick={()=>setPage({type:'profile'})}><Icon name="user" size={23}/></button></div>
+   <div className="header-tools"><label className="search"><Icon name="search" size={21}/><AdaptiveSearchInput aria-label="불편함이나 프로젝트 검색" value={query} onChange={e=>setQuery(e.target.value)}/>{query&&<button aria-label="검색 지우기" onClick={()=>setQuery('')}><Icon name="close" size={16}/></button>}</label><div className="header-account"><ProjectNotifications onOpen={openProject}/><button className="header-login" onClick={()=>user?signOut():setPage({type:'login'})}>{user?'로그아웃':'로그인'}</button>{user&&<span className="header-user">{user.name}님</span>}<button className="avatar" aria-label="내 프로필" onClick={()=>setPage({type:'profile'})}><Icon name="user" size={23}/></button></div></div>
   </div></header>
   <main>
    {projectError&&<div className="api-banner error" role="alert">{projectError}<button onClick={()=>setProjectReload(n=>n+1)}>프로젝트 다시 불러오기</button></div>}
@@ -215,7 +238,7 @@ export default function App(){
    {tab==='서비스 소개'&&!query?<ReadmePage onReport={()=>setPage({type:'report'})} onProjects={()=>setTab(footerPages[2])}/>:<>
    {tab==='홈'&&!query&&<>
     <section className="hero" aria-labelledby="hero-title"><div className="hero-copy"><div className="hero-line-numbers" aria-hidden="true">{Array.from({length:8},(_,i)=><span key={i}>{i+1}</span>)}</div><div className="hero-line-numbers" aria-hidden="true">{[1,2,3,4,5,6,7,8].map(number=><span key={number}>{number}</span>)}</div><p className="code-comment"><span className="numbered-line" data-line="1">// NEEDIT</span><span className="numbered-line" data-line="2">// 학생들의 불편함을 실제 서비스로 연결하는 플랫폼</span></p><h1 id="hero-title"><span className="numbered-line" data-line="3">당신의 불편함이</span><span className="numbered-line" data-line="4"><span>개발</span>로 해결되는 곳, <span>NEEDIT</span><span className="hero-caret" aria-hidden="true"/></span></h1><p className="hero-description"><span className="numbered-line" data-line="5">학교생활 속 불편함을 제보하고,</span><span className="numbered-line" data-line="6">컴퓨터학부 학생들과 함께 실질적인 해결책을 만들어가요.</span></p><div className="hero-spacer numbered-line" data-line="7" aria-hidden="true"/><div className="hero-actions numbered-line" data-line="8"><button className="button primary" onClick={()=>setPage({type:'report'})}><Icon name="pencil" size={28}/>불편함 제보하기</button><button className="button outline" onClick={()=>setTab('프로젝트')}><Icon name="code" size={29}/>프로젝트 둘러보기</button></div></div>
-    <div className="editor" aria-label="불편함을 서비스로 만드는 코드 예시"><div className="editor-top"><i/><i/><i/></div><div className="editor-tabs"><span><Icon name="code" size={18}/>needit.<b>ts</b></span></div><div className="code-lines"><div><em>1</em><code><span className="blue">const</span> <span className="purple">issue</span> = <span className="yellow">"학교생활 속 불편함"</span>;</code></div><div><em>2</em><code><span className="blue">const</span> <span className="purple">solution</span> = develop(issue);</code></div><div><em>3</em><code> </code></div><div><em>4</em><code className="green">// From Issue to Service</code></div></div></div></section>
+    <ResponsiveHeroArtwork className="editor" aria-label="불편함을 서비스로 만드는 코드 예시"><div className="editor-top"><i/><i/><i/></div><div className="editor-tabs"><span><Icon name="code" size={18}/>needit.<b>ts</b></span></div><div className="code-lines"><div><em>1</em><code><span className="blue">const</span> <span className="purple">issue</span> = <span className="yellow">"학교생활 속 불편함"</span>;</code></div><div><em>2</em><code><span className="blue">const</span> <span className="purple">solution</span> = develop(issue);</code></div><div><em>3</em><code> </code></div><div><em>4</em><code className="green">// From Issue to Service</code></div></div></ResponsiveHeroArtwork></section>
    </>}
    {(tab!=='홈'||query)&&<div className="page-heading"><div><p className="code-comment">// {query?'SEARCH':tab==='프로젝트'?'PROJECTS':'DISCOVER'}</p><h1>{query?'검색 결과':tab}</h1><p>{query?`“${query}”에 대한 불편함과 프로젝트를 찾아보세요.`:tab==='프로젝트'?'학생들의 불편함이 실제 서비스로 만들어지고 있어요.':'당신도 같은 불편함을 겪었다면 공감해주세요.'}</p></div><button className="button primary" onClick={()=>setPage({type:'report'})}><Icon name="pencil"/>불편함 제보하기</button></div>}
    <div className={`dashboard ${tab===footerPages[0]&&!query?'home-dashboard':''} ${tab!=='홈'&&!query?'single':''}`}>
