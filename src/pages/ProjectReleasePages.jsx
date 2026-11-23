@@ -1,3 +1,4 @@
+import useSessionPreference from '../hooks/useSessionPreference.js';
 import ProjectDeleteButton from '../components/ProjectDeleteButton.jsx';
 import ProjectIntroduction from '../components/ProjectIntroduction.jsx';
 import useMyFilter from '../hooks/useMyFilter.js';
@@ -47,7 +48,7 @@ export function ProblemProjectLinks({problem,onOpenProject}) {
 }
 
 export function ProjectsPage({projects,problems,onOpen,onCreated,projectToday}){
- const [status,setStatus]=useState('전체');
+ const [status,setStatus]=useSessionPreference('needit-projects:status','전체',['전체',...releaseStatuses]);
  const {user,requireLogin}=useAuth();
  const [onlyMine,setOnlyMine]=useMyFilter(user?.id,'projects');
  const cards=projects.map(project=>{
@@ -179,7 +180,7 @@ function PublicationEditor({project,onSaved,onCancel}){
  return <form className="release-editor" onSubmit={async e=>{e.preventDefault();if(lock.current)return;lock.current=true;setBusy(true);setError('');try{onSaved(await saveProject(project.id,data));}catch(e){setError(e.message);}finally{lock.current=false;setBusy(false);}}}><h2>프로젝트 공개 정보 수정</h2><fieldset disabled={busy}><label>서비스 상태<select name="release_status" value={data.release_status} onChange={change}>{releaseStatuses.map(s=><option key={s}>{s}</option>)}</select></label><label>배포된 서비스 주소<input name="deployment_url" type="url" placeholder="https://..." value={data.deployment_url} onChange={change} maxLength={2000} required={data.release_status==='서비스 운영 중'}/></label><label>사용 방법<textarea name="usage_guide" rows={5} value={data.usage_guide} onChange={change} maxLength={5000} placeholder="서비스를 사용하는 방법과 로그인 필요 여부를 알려주세요."/></label><p className="wp-demo">운영 중으로 변경하면 관심 등록한 사용자와 관련 불편함에 공감한 사용자에게 출시 알림이 표시돼요.</p><div className="release-actions"><button className="button primary" type="submit">{busy?'저장 중…':'저장하기'}</button><button className="button outline" type="button" onClick={onCancel}>취소</button></div></fieldset>{error&&<p role="alert" className="release-error">{error}</p>}</form>;
 }
 export function ProjectDetailPage({project:initial,onBack,onIssues,onIssue,onUpdate,backLabel,projectToday,startEditing=false,onDeleted}){
- const {user,requireLogin}=useAuth();const [project,setProject]=useState(initial);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [retry,setRetry]=useState(0);const [editing,setEditing]=useState(false);const [tab,setTab]=useState('소개');const [content,setContent]=useState('');const [kind,setKind]=useState('review');const [busy,setBusy]=useState(false);const lock=useRef(false);
+ const {user,requireLogin}=useAuth();const [project,setProject]=useState(initial);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [retry,setRetry]=useState(0);const [editing,setEditing]=useState(false);const [tab,setTab]=useSessionPreference('needit-project-detail:'+initial.id+':'+String(user?.id||'guest'),'소개',['소개','관련 불편함','후기·오류 제보']);const [content,setContent]=useState('');const [kind,setKind]=useState('review');const [busy,setBusy]=useState(false);const lock=useRef(false);
  useEffect(()=>{const c=new AbortController();setLoading(true);setError('');setEditing(false);getProject(initial.id,c.signal).then(p=>{setProject(p);setEditing(Boolean(startEditing&&p.can_edit));}).catch(e=>{if(!c.signal.aborted)setError(e.message);}).finally(()=>{if(!c.signal.aborted)setLoading(false);});return()=>c.abort();},[initial.id,user?.id,retry,startEditing]);
  function update(p){setProject(prev=>({...prev,...p}));onUpdate?.(p);}
  async function action(fn){if(!requireLogin()||lock.current)return;lock.current=true;setBusy(true);setError('');try{await fn();}catch(e){setError(e.message);}finally{lock.current=false;setBusy(false);}}
