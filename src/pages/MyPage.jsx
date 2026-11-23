@@ -1,3 +1,5 @@
+import ProblemDeleteButton from '../components/ProblemDeleteButton.jsx';
+import ProjectDeleteButton from '../components/ProjectDeleteButton.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import Icon from '../components/common/Icon.jsx';
 import {isLinkedProject,projectDisplayStatus,projectStatusClass} from '../utils/projectPresentation.js';
@@ -16,7 +18,7 @@ export default function MyPage(props){
  if(!props.user?.id)return <section className="wp-page my-page"><h1>마이페이지</h1><p role="status">로그인 정보를 확인하고 있어요. 로그인이 완료되면 다시 열어주세요.</p></section>;
  return <MyPageBoundary key={props.user.id}><AuthenticatedMyPage {...props}/></MyPageBoundary>;
 }
-function AuthenticatedMyPage({user,projects:allProjects,onIssue,onProject,onReport,onProfileUpdate,onExplore,onBrowseProjects,projectToday}){
+function AuthenticatedMyPage({user,projects:allProjects,onIssue,onProject,onReport,onProfileUpdate,onExplore,onBrowseProjects,projectToday,onProjectDeleted,onProblemDeleted}){
  const [account,setAccount]=useState(()=>emptyAccount(user));const [loaded,setLoaded]=useState(false);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [retry,setRetry]=useState(0);
  const [editing,setEditing]=useState(false);const [draft,setDraft]=useState({});const [saving,setSaving]=useState(false);const [saveError,setSaveError]=useState('');const [saved,setSaved]=useState(false);
  const [tab,setTab]=useState(()=>readMyTab(user.id));const [allActivity,setAllActivity]=useState(false);const lock=useRef(false);
@@ -31,6 +33,14 @@ function AuthenticatedMyPage({user,projects:allProjects,onIssue,onProject,onRepo
   event.preventDefault();if(lock.current)return;lock.current=true;setSaving(true);setSaveError('');setSaved(false);
   try{const profile=await saveProfile(draft);setAccount(prev=>({...prev,profile}));onProfileUpdate?.(profile);setEditing(false);setSaved(true);}
   catch(e){setSaveError(e.message);}finally{lock.current=false;setSaving(false);}
+ }
+ function problemDeleted(id){
+  setAccount(previous=>({...previous,problems:previous.problems.filter(p=>String(p.id)!==String(id)),activity:previous.activity.filter(item=>!(item.type==='problem'&&String(item.id)===String(id)))}));
+  onProblemDeleted?.(id);setRetry(n=>n+1);
+ }
+ function projectDeleted(id){
+  setAccount(previous=>({...previous,projects:previous.projects.filter(p=>String(p.id)!==String(id)),activity:previous.activity.filter(item=>!(item.type==='project'&&String(item.id)===String(id)))}));
+  onProjectDeleted?.(id);setRetry(n=>n+1);
  }
  const {profile,problems,projects,activity,warnings,unavailable}=account;
  const sectionKeys=['mine','liked','favorites','managed'];
@@ -58,7 +68,7 @@ function AuthenticatedMyPage({user,projects:allProjects,onIssue,onProject,onRepo
   <div className="my-tabs" role="tablist" aria-label="나의 활동">{labels.map((label,i)=><button role="tab" id={`my-tab-${i}`} aria-controls="my-tab-panel" aria-selected={tab===i} className={tab===i?'active':''} onClick={()=>chooseTab(i)} key={label}><Icon name={icons[i]} size={24}/>{label} ({!loaded||unavailable.includes(sectionKeys[i])?'—':groups[i].length})</button>)}</div>
   <div className="my-content"><section className="wp-box" id="my-tab-panel" role="tabpanel" aria-labelledby={`my-tab-${tab}`}>
    <h2 className="my-panel-heading"><span>{labels[tab]}</span>{tab===0&&<button className="button outline" onClick={onReport}>＋ 불편함 제안하기</button>}</h2>
-   <div className="my-items">{sectionMissing&&<p className="empty" role="status">{loading?'저장된 정보를 불러오는 중이에요…':'목록을 불러오지 못했어요. 다시 불러오기를 눌러주세요.'}</p>}{groups[tab].length?groups[tab].map(p=>{const linked=tab<2 ? allProjects?.find(project=>isLinkedProject(project,p)) : p; return <article className="my-project-entry" key={p.id}><button className="my-item" key={p.id} onClick={()=>tab<2?onIssue(p):onProject(p)}><span className="issue-id">#{p.id}</span><div><div className="my-item-title"><h3>{p.title}</h3>{tab<2&&<span className={"my-item-count"+(tab===1?" my-item-liked":"")}><Icon name="heart" size={20}/>{p.count}</span>}</div><p className={tab>=2?"my-service-introduction":undefined}>{tab>=2&&<strong>서비스 소개: </strong>}{p.description||(tab>=2?"아직 등록된 서비스 소개가 없어요.":"")}</p></div>{tab<2&&<span className="category">{p.category}</span>}<span className={"status "+(linked?projectStatusClass(projectDisplayStatus(linked)):"my-project-unlinked")}>{linked?projectDisplayStatus(linked):"연결 전"}</span><Icon name="arrow" size={18}/></button>{linked&&<div className="release-actions"><span className="wp-demo">개발 완료 예정일: {linked.expected_completion_date||'미정'}</span></div>}</article>;}):sectionMissing?null:<div className="my-empty"><Icon name={icons[tab]} size={36}/><h3>{['아직 등록한 불편함이 없어요','아직 공감한 불편함이 없어요','관심 등록한 프로젝트가 없어요','담당하고 있는 프로젝트가 없어요'][tab]}</h3><p>{['첫 번째 불편함을 들려주세요.','불편함 탐색에서 공감한 글이 여기에 표시돼요.','프로젝트 상세에서 관심 등록해보세요.','담당자로 지정된 프로젝트가 여기에 표시돼요.'][tab]}</p><button className="button primary" onClick={[onReport,onExplore,onBrowseProjects,onBrowseProjects][tab]}>{['불편함 제보하기','불편함 탐색하기','프로젝트 둘러보기','프로젝트 둘러보기'][tab]}</button></div>}</div>
+   <div className="my-items">{sectionMissing&&<p className="empty" role="status">{loading?'저장된 정보를 불러오는 중이에요…':'목록을 불러오지 못했어요. 다시 불러오기를 눌러주세요.'}</p>}{groups[tab].length?groups[tab].map(p=>{const linked=tab<2 ? allProjects?.find(project=>isLinkedProject(project,p)) : p; return <article className="my-project-entry" key={p.id}><button className="my-item" key={p.id} onClick={()=>tab<2?onIssue(p):onProject(p)}><span className="issue-id">#{p.id}</span><div><div className="my-item-title"><h3>{p.title}</h3>{tab<2&&<span className={"my-item-count"+(tab===1?" my-item-liked":"")}><Icon name="heart" size={20}/>{p.count}</span>}</div><p className={tab>=2?"my-service-introduction":undefined}>{tab>=2&&<strong>서비스 소개: </strong>}{p.description||(tab>=2?"아직 등록된 서비스 소개가 없어요.":"")}</p></div>{tab<2&&<span className="category">{p.category}</span>}<span className={"status "+(linked?projectStatusClass(projectDisplayStatus(linked)):"my-project-unlinked")}>{linked?projectDisplayStatus(linked):"연결 전"}</span><Icon name="arrow" size={18}/></button>{(linked||(tab===0&&p.mine===true&&p.can_delete===true))&&<div className="release-actions">{linked&&<span className="wp-demo">개발 완료 예정일: {linked.expected_completion_date||'미정'}</span>}{tab===0&&<ProblemDeleteButton problem={p} onDeleted={problemDeleted}/>}{tab===3&&p.can_edit===true&&<ProjectDeleteButton project={p} onDeleted={projectDeleted}/>}</div>}</article>;}):sectionMissing?null:<div className="my-empty"><Icon name={icons[tab]} size={36}/><h3>{['아직 등록한 불편함이 없어요','아직 공감한 불편함이 없어요','관심 등록한 프로젝트가 없어요','담당하고 있는 프로젝트가 없어요'][tab]}</h3><p>{['첫 번째 불편함을 들려주세요.','불편함 탐색에서 공감한 글이 여기에 표시돼요.','프로젝트 상세에서 관심 등록해보세요.','담당자로 지정된 프로젝트가 여기에 표시돼요.'][tab]}</p><button className="button primary" onClick={[onReport,onExplore,onBrowseProjects,onBrowseProjects][tab]}>{['불편함 제보하기','불편함 탐색하기','프로젝트 둘러보기','프로젝트 둘러보기'][tab]}</button></div>}</div>
   </section><section className="wp-box"><h2 className="my-panel-heading"><span>최근 활동</span>{activity.length>4&&<button onClick={()=>setAllActivity(!allActivity)}>{allActivity?'접기':'전체보기 →'}</button>}</h2><div className="my-activity">
    {activity.length?(allActivity?activity:activity.slice(0,4)).map(item=><button className="my-activity-row" key={item.key} onClick={()=>openActivity(item)}><span className="my-activity-dot"/><span className="my-activity-icon"><Icon name={item.icon} size={23}/></span><span><strong>{item.title}</strong><p>{item.text}</p>{item.created_at&&<small>{new Date(item.created_at).toLocaleDateString('ko-KR')}</small>}</span></button>):<div className="my-empty"><Icon name="folder" size={32}/><p>불편함을 등록하거나 공감하면<br/>활동 내역이 여기에 표시돼요.</p></div>}
   </div></section></div>

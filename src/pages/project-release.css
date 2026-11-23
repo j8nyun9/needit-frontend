@@ -210,3 +210,26 @@
  .wp-page .wp-project-detail.project-detail-aligned{grid-template-columns:minmax(0,1fr);}
  .project-detail-aligned > aside{grid-column:1;grid-row:3;margin-top:20px;}
 }
+
+.my-project-delete{display:inline-flex;align-items:center;gap:6px;min-height:34px;margin-left:auto;padding:6px 10px;font-size:12px;color:#eea19a;border:1px solid #87554f;border-radius:7px;}
+.my-project-delete:hover{background:#442e31;}
+.project-delete-dialog h2{font-size:21px;}
+.project-delete-dialog p{font-size:14px;line-height:1.9;color:#b9c6d5;margin:16px 0;word-break:keep-all;}
+.project-delete-dialog .project-delete-name{color:#edf2f8;font-weight:600;}
+.project-delete-dialog .release-actions{justify-content:flex-end;margin-bottom:0;}
+.project-delete-dialog .button{font-size:14px;min-height:40px;padding:9px 16px;}
+.project-delete-confirm{background:#a83f39;color:#fff;border:1px solid #c75c55;}
+
+.release-title .project-actions-menu{margin-left:auto;flex-shrink:0;}
+.project-actions-menu .wp-issue-menu{z-index:12;}
+.project-actions-menu .wp-issue-menu-danger{color:#ffada4;}
+
+.project-detail-delete{background:#a83f39;border:1px solid #c75c55;color:#fff;}
+.project-detail-delete:hover{background:#bb4b43;}
+
+/* Use the same compact destructive action in project details and account lists. */
+.my-project-delete.project-detail-delete{margin-left:0;background:transparent;border:1px solid #87554f;color:#eea19a;min-height:34px;padding:6px 10px;font-size:12px;font-weight:400;border-radius:7px;gap:6px;}
+.my-project-delete.project-detail-delete:hover{background:#442e31;}
+
+.button.outline.project-detail-delete{margin-left:0;background:transparent;border-color:#87554f;color:#eea19a;}
+.button.outline.project-detail-delete:hover{background:#442e31;border-color:#bd756c;}

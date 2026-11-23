@@ -3,9 +3,10 @@ import React,{useEffect,useRef,useState} from 'react';
 import {apiRequest} from '../services/problems.js';
 import {normalizeProject} from '../services/projects.js';
 const fields=p=>({description:p.description||'',usage_guide:p.usage_guide||'',features:(p.features||[]).filter(f=>typeof f==='string').join('\n')});
-export default function ProjectIntroduction({project,canEdit,onSaved}){
+export default function ProjectIntroduction({project,canEdit,onSaved,editRequest=0}){
  const [editing,setEditing]=useState(false),[data,setData]=useState(()=>fields(project)),[busy,setBusy]=useState(false),[error,setError]=useState('');const request=useRef(null);
  useEffect(()=>()=>request.current?.abort(),[]);
+ useEffect(()=>{if(editRequest>0&&canEdit){setData(fields(project));setError('');setEditing(true);}},[editRequest,canEdit]);
  function change(e){setData(p=>({...p,[e.target.name]:e.target.value}));}
  async function save(e){
   e.preventDefault();if(request.current||!canEdit||!data.description.trim())return;
