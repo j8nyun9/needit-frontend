@@ -1,3 +1,4 @@
+import {createNavigationHistory} from './utils/navigationHistory.js';
 import AdaptiveSearchInput from './components/AdaptiveSearchInput.jsx';
 import ResponsiveHeroArtwork from './components/ResponsiveHeroArtwork.jsx';
 import React, { useEffect, useRef, useState } from 'react';
@@ -80,6 +81,7 @@ export default function App(){
  function updateProject(row){setProjects(prev=>prev.map(p=>String(p.id)===String(row.id)?{...p,...row}:p));}
  function openProject(row){setPageState(previous=>({type:'project',data:row,back:previous}));}
  function openProjectDraft(problem) {
+  if(problem.ai_plan?.swCategory==='difficult')return;
   if(!requireLogin()||!problem.ai_plan_access||String(problem.ai_plan_owner_id)!==String(user.id)||
    !problem.ai_plan)return;
   setPageState({type:'project-draft',data:problem,accountId:user.id,back:page});
@@ -99,12 +101,18 @@ export default function App(){
   const projectId=params.get('project');
   if(projectId&&/^\d+$/.test(projectId))return {type:'project',data:{id:projectId}};
   const id=params.get('issue');
-  return id?{type:params.get('edit')==='1'?'problem-edit':'problem',data:{id}}:null;
+  return id?{type:params.get('edit')==='1'?'problem-edit':'problem',data:{id}}:(window.history.state?.needitNavigation?.page||null);
  });
- const [tab,setTab]=useState(()=>{if(initialIssuePage)return initialIssuePage.type==='project'?footerPages[2]:footerPages[1];try{const saved=sessionStorage.getItem('needit-active-tab');return footerPages.includes(saved)?saved:footerPages[0];}catch{return footerPages[0];}});
+ const [tab,setTab]=useState(()=>{if(initialIssuePage)return initialIssuePage.type==='project'?footerPages[2]:footerPages[1];if(footerPages.includes(window.history.state?.needitNavigation?.tab))return window.history.state.needitNavigation.tab;try{const saved=sessionStorage.getItem('needit-active-tab');return footerPages.includes(saved)?saved:footerPages[0];}catch{return footerPages[0];}});
  const [query,setQuery]=useState('');
  const [problems,setProblems]=useState([]);
  const [page,setPageState]=useState(initialIssuePage);
+ const navigationHistory=useRef(null);
+ useEffect(()=>{
+  navigationHistory.current=createNavigationHistory({tab,page,query},route=>{setTab(route.tab);setPageState(route.page);setQuery(route.query||'');});
+  return()=>{navigationHistory.current?.dispose();navigationHistory.current=null;};
+ },[]);
+ useEffect(()=>{navigationHistory.current?.update({tab,page,query});},[tab,page,query]);
  useEffect(()=>{if(page?.type==='login')return;try{sessionStorage.setItem('needit-active-tab',page?.type==='profile'?footerPages[4]:tab);}catch{/* Navigation preference only. */}},[tab,page?.type]);
  function requireLogin(){if(user)return true;setNotice('로그인 후 사용할 수 있는 기능이에요.');setQuery('');setPageState({type:'login'});return false;}
  function setPage(value){if(typeof value==='function'){setPageState(value);return;}if(['report','profile'].includes(value?.type)&&!requireLogin())return;setPageState(value);}
@@ -144,16 +152,6 @@ export default function App(){
    ?{...previous,problem:{...previous.problem,...row}}:previous);
  }
  async function saveProblem(data){if(!requireLogin())throw new Error('로그인이 필요해요.');const p=await createProblem(data);setProblems(prev=>[{...p,mine:true},...prev.filter(item=>item.id!==p.id)]);setApiError('');setTab(footerPages[1]);setPage(null);setNotice('불편함을 DB에 등록했어요.');}
- useEffect(()=>{
-  const url = new URL(window.location.href);
-  if(problemId)url.searchParams.set('issue',problemId);
-  else url.searchParams.delete('issue');
-  if(page?.type==='project')url.searchParams.set('project',page.data.id);
-  else url.searchParams.delete('project');
-  if(editingProblem)url.searchParams.set('edit','1');
-  else url.searchParams.delete('edit');
-  if(url.href!==window.location.href)window.history.replaceState(window.history.state,'',url.href);
- },[problemId,editingProblem,page?.type,page?.data?.id]);
  const [liked,setLiked]=useState([]);
  const [dialog,setDialog]=useState(null);
  const [notice,setNotice]=useState('');

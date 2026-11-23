@@ -130,6 +130,7 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
 
  function submit(event) {
   event.preventDefault();
+  if(plan.swCategory==='difficult'){setError('소프트웨어만으로 해결하기 어려운 불편함은 채택할 수 없어요.');return;}
   if(existingProject||invalidFeatures||invalidDate||!draft.title.trim()||!draft.description.trim())return;
   run(async signal=>{
    try{
@@ -163,7 +164,7 @@ export function ProjectCreatePage({ problem, onCancel, onCreated, onProblemUpdat
 
     {error&&<p className="release-error" role="alert">{error}</p>}
     <div className="release-actions">
-     {existingProject?<button className="button primary" type="button" onClick={()=>onOpenProject(existingProject)}>내 프로젝트 보기</button>:<button className="button primary" type="submit" disabled={invalidFeatures||invalidDate||!draft.title.trim()||!draft.description.trim()}>{busy?'등록 중…':'프로젝트 등록하기'}</button>}
+     {existingProject?<button className="button primary" type="button" onClick={()=>onOpenProject(existingProject)}>내 프로젝트 보기</button>:<button className="button primary" type="submit" disabled={plan.swCategory==='difficult'||invalidFeatures||invalidDate||!draft.title.trim()||!draft.description.trim()}>{busy?'등록 중…':'프로젝트 등록하기'}</button>}
      <button className="button outline" type="button" onClick={onCancel}>취소</button>
     </div>
    </fieldset>

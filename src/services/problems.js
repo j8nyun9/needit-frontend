@@ -28,7 +28,7 @@ async function request(path,options={},retried=false){
   return request(path,options,true);
  }
  if(!response.ok){
-  const message=response.status===404&&!preservePageOnAuthError?'요청한 불편함 또는 AI API를 찾지 못했어요. 최신 백엔드 배포를 확인해주세요.':body?.ai_error?.message||body?.error||`서버 오류가 발생했어요 (${response.status}).`;
+  const message=body?.ai_error?.message||body?.error||(response.status===404?(path.startsWith('/projects')?'프로젝트 API를 찾지 못했어요 (404). 삭제 API가 포함된 백엔드가 배포되었는지 확인해주세요.':'요청한 API를 찾지 못했어요 (404). 최신 백엔드 배포를 확인해주세요.'):`서버 오류가 발생했어요 (${response.status}).`);
   if(response.status===401&&!preservePageOnAuthError&&typeof window!=='undefined')window.dispatchEvent(new Event('needit-auth-expired'));
   const error=new Error(message);error.status=response.status;if(response.status===409&&body?.project?.id!=null)error.project=body.project;
   const wait=Number(body?.retry_after||response.headers.get('Retry-After'));
@@ -49,7 +49,7 @@ export async function editProblem(id,{title,description,category}) {
  if(row?.id==null||String(row.id)!==String(id))throw new Error('불편함 수정 결과를 확인하지 못했어요.');
  return normalizeProblem(row);
 }
-export async function generateProblemPlan(id,signal){const row=await request(`/problems/${encodeURIComponent(id)}/plan`,{method:'POST',signal});if(!row?.ai_plan?.hackathonPlan||row.ai_status==='failed')throw new Error(row?.ai_error?.message||'AI 기획안 생성 결과를 확인하지 못했어요.');return normalizeProblem(row);}
+export async function generateProblemPlan(id,signal){const row=await request(`/problems/${encodeURIComponent(id)}/plan`,{method:'POST',signal});if((!row?.ai_plan?.hackathonPlan&&row?.ai_plan?.swCategory!=='difficult')||row.ai_status==='failed')throw new Error(row?.ai_error?.message||'AI 기획안 생성 결과를 확인하지 못했어요.');return normalizeProblem(row);}
 
 export async function listProblemComments(id, signal) {
   const rows = await request('/problems/' + encodeURIComponent(id) + '/comments', { signal });

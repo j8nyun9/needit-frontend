@@ -1,6 +1,7 @@
 const text=value=>typeof value==='string'?value.trim():'';
 const cleanTitle=value=>text(value).replace(/^#{1,6}\s+/, '');
 export function notionPlanMarkdown(problem,plan){
+ if(plan?.swCategory==='difficult')return ['**해결 가능성:** 소프트웨어만으로 해결하기 어려움',text(plan.swReason)].filter(Boolean).join('\n\n');
  const d=plan?.hackathonPlan;if(!d)return '';
  const blocks=[];
  const add=(heading,contents)=>{const rows=contents.filter(Boolean);if(rows.length)blocks.push('## '+heading,...rows);};
