@@ -133,3 +133,80 @@
  .my-page .my-stat > strong{grid-column:2;grid-row:1;font-size:26px;line-height:1.2;text-align:right;}
  .my-page .my-stat > span{grid-column:1/-1;grid-row:2;font-size:13px;white-space:normal;word-break:keep-all;}
 }
+
+/* Feedback: quiet ownership tools and compact reaction controls. */
+.release-feedback{position:relative;padding-top:20px;padding-bottom:18px;}
+.release-feedback > strong{display:block;padding-right:132px;line-height:1.6;font-size:14px;}
+.release-feedback > time{font-size:12px;color:#8795a5;}
+.release-feedback > .release-copy{margin:18px 0 16px;font-size:14px;}
+.feedback-manage-tools{position:absolute;right:0;top:19px;display:flex;align-items:center;gap:4px;}
+.feedback-manage-button{display:inline-flex;align-items:center;gap:5px;padding:7px 8px;min-height:32px;border:0;border-radius:6px;font-size:12px;color:#9cabbc;background:transparent;}
+.feedback-manage-button:hover{color:#d5e8ff;background:#ffffff08;}
+.feedback-delete-button:hover{color:#ff9b94;background:#ed6a6010;}
+.feedback-reactions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.feedback-reaction{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:7px 12px;border:1px solid #3b4652;border-radius:18px;background:transparent;color:#9fadbE;font-size:12px;font-weight:500;transition:background .15s,border-color .15s,color .15s;}
+.feedback-reaction:hover{background:#ffffff06;border-color:#657286;color:#d8e2ef;}
+.feedback-reaction.like.selected{color:#8fbcff;border-color:#507bb8;background:#5999f91a;}
+.feedback-reaction.dislike.selected{color:#f2a9a2;border-color:#96645f;background:#ed6a6015;}
+.feedback-reaction.selected svg{fill:currentColor;fill-opacity:.16;}
+.feedback-delete-confirm{padding:16px;border:1px solid #73504d;border-radius:8px;background:#40272533;margin:14px 0;}
+.feedback-delete-confirm p{font-size:13px;line-height:1.7;margin-bottom:12px;}
+.feedback-delete-confirm .button,.release-feedback-actions form .button{font-size:12px;min-height:34px;padding:7px 12px;gap:6px;margin-right:8px;}
+.release-feedback-actions form{margin:14px 0;}
+@media(max-width:480px){.feedback-manage-tools{gap:0;}.feedback-manage-button{padding:7px 5px;gap:4px;}.release-feedback > strong{padding-right:110px;}}
+
+/* Match feedback rows to the inconvenience comment layout. */
+.release-feedback.wp-comment{display:flex;align-items:flex-start;gap:14px;padding:18px 0;margin-top:0;border-top:0;border-bottom:1px solid #353e48;}
+.release-feedback.wp-comment > svg{color:#a6b3c3;margin-top:3px;}
+.release-feedback.wp-comment > .feedback-comment-body{position:relative;flex:1;min-width:0;}
+.feedback-comment-body > .wp-comment-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;padding-right:108px;min-height:28px;}
+.feedback-comment-body .wp-comment-meta strong{font-size:13px;}
+.feedback-comment-body .wp-comment-time{font-size:12px;color:#a6b0be;margin:0;}
+.feedback-comment-body .feedback-kind{font-size:11px;color:#8797aa;}
+.feedback-comment-body > .release-copy{font-size:14px;line-height:1.8;margin:4px 0 10px;}
+.feedback-comment-body .feedback-manage-tools{position:static;}
+.feedback-comment-body .feedback-edit-trigger{position:absolute;right:52px;top:0;}
+.feedback-comment-body .feedback-delete-trigger{position:absolute;right:0;top:0;}
+.feedback-reaction.like.selected{color:#ef555f;border-color:#a64c50;background:#ef555f12;}
+.feedback-reaction.like.selected svg{fill:currentColor;fill-opacity:1;}
+
+.feedback-heart-row{margin-top:10px;}
+.feedback-heart{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:4px 0;border:0;background:transparent;color:#bdc8d7;font-size:14px;font-weight:400;}
+.feedback-heart:hover{color:#ef777c;}
+.feedback-heart.liked{color:#ef555f;}
+.feedback-heart.liked svg{fill:currentColor;}
+.feedback-heart:disabled{cursor:wait;opacity:.65;}
+
+.feedback-kind-reaction{display:inline-flex;align-items:center;gap:10px;}
+.feedback-kind-reaction .feedback-heart-row{margin-top:0;}
+.feedback-kind-reaction .feedback-heart{min-height:28px;font-size:12px;gap:5px;}
+.feedback-kind-reaction .feedback-heart svg{width:17px;height:17px;}
+
+/* Shared edit/delete controls for problem comments and project feedback. */
+.wp-page .wp-comment :is(.wp-comment-edit-trigger,.wp-comment-delete){
+ display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;
+ position:absolute;top:0;width:42px;height:30px;min-height:30px;
+ padding:0;margin:0;border:1px solid;border-radius:7px;
+ font-size:12px;font-weight:400;line-height:1;white-space:nowrap;text-decoration:none;background:transparent;
+}
+.wp-page .wp-comment .wp-comment-edit-trigger{right:50px;color:#9abfea;border-color:#4e6684;}
+.wp-page .wp-comment .wp-comment-delete{right:0;color:#ffada4;border-color:#87554f;}
+.wp-page .wp-comment .wp-comment-edit-trigger:hover{background:#27364a;text-decoration:none;}
+.wp-page .wp-comment .wp-comment-delete:hover{background:#442e31;}
+.wp-page .wp-comment .wp-comment-meta{padding-right:102px;min-height:30px;}
+
+.wp-page .release-feedback .feedback-heart[aria-pressed="true"]{color:#ef555f;}
+.wp-page .release-feedback .feedback-heart[aria-pressed="true"] svg{color:#ef555f;fill:#ef555f;fill-opacity:1;}
+.wp-page .release-feedback .feedback-heart[aria-pressed="true"] span{color:#ef555f;}
+
+/* Align the sidebar with the content panel below the tabs. */
+.wp-page .wp-project-detail.project-detail-aligned{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);column-gap:28px;row-gap:0;}
+.project-detail-aligned > div:first-child{display:contents;}
+.project-detail-aligned > div:first-child > .wp-detail-tabs{grid-column:1/-1;grid-row:1;}
+.project-detail-aligned > div:first-child > .wp-box{grid-column:1;grid-row:2;}
+.project-detail-aligned > aside{grid-column:2;grid-row:2;display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-self:start;}
+.project-detail-aligned > aside > .wp-box{margin:0;}
+@media(max-width:850px){
+ .wp-page .wp-project-detail.project-detail-aligned{grid-template-columns:minmax(0,1fr);}
+ .project-detail-aligned > aside{grid-column:1;grid-row:3;margin-top:20px;}
+}

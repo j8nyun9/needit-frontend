@@ -95,6 +95,7 @@ export function ExplorePage({problems,liked,onLike,onOpen,onReport,query=''}){co
         ))}
       <button type="button" className={'my-filter-toggle'+(onlyMine?' is-on':'')} aria-pressed={onlyMine} aria-label="내가 작성한 불편함" onClick={()=>{if(onlyMine)setOnlyMine(false);else if(requireLogin())setOnlyMine(true);}}><span>My</span><span className="my-filter-switch" aria-hidden="true"/></button></div><select aria-label="정렬" value={sort} onChange={e=>setSort(e.target.value)}><option value="latest">최신순</option><option value="popular">인기순</option></select></div><div className="wp-list-heading"><h2>전체 <span>{items.length}</span>건의 불편함</h2><button className="button primary" onClick={onReport}><Icon name="pencil" size={20}/>불편함 제보하기</button></div><div className="wp-issue-grid">{items.map((p,index)=>{
  const rank=sort==='popular'&&index<2?index+1:null;
+ const hasMyPlan=Boolean(user && p.ai_plan_access===true && String(p.ai_plan_owner_id)===String(user.id) && p.ai_plan?.hackathonPlan);
  const cardClass=rank?`wp-issue-card wp-rank-${rank}`:'wp-issue-card';
  return <article className={cardClass} key={p.id}>
   {rank&&<span className="wp-rank-label">인기 {rank}위</span>}
@@ -108,6 +109,7 @@ export function ExplorePage({problems,liked,onLike,onOpen,onReport,query=''}){co
   <div className="wp-card-bottom">
     <button type="button" className={'wp-card-heart'+(liked.includes(p.id)?' wp-liked':'')} onClick={()=>onLike(p.id)} aria-pressed={liked.includes(p.id)} aria-label={p.title+' 공감'}><Icon name="heart" size={20}/>{p.count}</button>
     <IssueProjectSummary problem={p}/>
+    {user&&<span className={"wp-plan-state"+(hasMyPlan?" is-generated":"")}><span aria-hidden="true"/>{hasMyPlan?"내 AI 기획안 · 생성됨":"내 AI 기획안 · 미생성"}</span>}
   </div>
   </article>;})}</div>{!items.length&&<p className="empty">조건에 맞는 불편함이 없어요.</p>}</div>}
 const issueDateFormatter = new Intl.DateTimeFormat('ko-KR', {

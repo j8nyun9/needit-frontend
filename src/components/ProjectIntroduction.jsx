@@ -23,6 +23,6 @@ export default function ProjectIntroduction({project,canEdit,onSaved}){
    <label>주요 기능<textarea name="features" rows={5} maxLength={15030} value={data.features} onChange={change}/></label>
    <p className="wp-demo">주요 기능은 한 줄에 하나씩 입력해주세요. (최대 30개, 각 500자)</p>
    <div className="release-actions"><button className="button primary" disabled={busy||!data.description.trim()}>{busy?'저장 중…':'저장'}</button><button className="button outline" type="button" onClick={()=>setEditing(false)}>취소</button></div>
-  </fieldset>{error&&<p role="alert" className="release-error">{error}</p>}</form>:<><p className="release-copy">{project.description}</p><h3>사용 방법</h3><p className="release-copy">{project.usage_guide||'아직 등록된 사용 방법이 없어요.'}</p>{Array.isArray(project.features)&&project.features.length>0&&<><h3>주요 기능</h3><ul>{project.features.map((f,i)=><li key={i}>{typeof f==='string'?f:JSON.stringify(f)}</li>)}</ul></>}</>}</div>
+  </fieldset>{error&&<p role="alert" className="release-error">{error}</p>}</form>:<><h3>서비스 소개</h3><p className="release-copy">{project.description}</p><h3>사용 방법</h3><p className="release-copy">{project.usage_guide||'아직 등록된 사용 방법이 없어요.'}</p>{Array.isArray(project.features)&&project.features.length>0&&<><h3>주요 기능</h3><ul>{project.features.map((f,i)=><li key={i}>{typeof f==='string'?f:JSON.stringify(f)}</li>)}</ul></>}</>}</div>
  </section>;
 }
